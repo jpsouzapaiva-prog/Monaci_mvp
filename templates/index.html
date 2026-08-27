@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <style>
+     body {
+         background-color: #f5f5f5;
+         font-family: Arial, sans-serif;
+         margin: 0;
+     }
+     header {background-color: #c62828;
+         color: #ffD600;
+         padding: 20px;
+         text-align: center;
+         border-radius: 0 0 20px 20px;
+     }
+     main {
+         padding: 20px;
+     }
+     .produto {
+         background-color: White;
+         padding: 20px;
+         margin: 20px 0;
+         border-radius: 10px;
+     }
+     button{
+         background-color: #c62828;
+         color: white;
+         padding: 10px 20px;
+         border: nome;
+         border-radius: 8px;
+         cursor: pointer;
+     }
+    </style>
+     </head>
+     <body>
+         <header>
+     <h1>Familía Monaci</h1>
+     <p> Faça seu pedido </p>
+         </header>
+     <main>
+         <h2> TESTE JOAO 123</h2>
+         <h3>Cachorros-Quentes</h3>
+         <div class="produtos">
+             <h4>Cachorro-quente completo</h4>
+             <p>Carne, Verdura, Salsicha, Milho, Ovo e Azeitona</p>
+             <p>R$ 12,00</p>
+            <button onclick="adicionarItem(0)">Adicionar</button>
+<button onclick="removerItem(0)">Remover</button>
+
+<p id="carrinho0">Cachorro-quente completo - quantidade:0</p>
+</div>
+
+<div class="produtos">
+    <h4>Cachorro-quente sem verdura</h4>
+    <p>Carne, Salsicha, Milho, Ovo e Azeitona</p>
+    <p>R$ 13,00</p>
+    <button onclick="adicionarItem(1)">Adicionar</button>
+<button onclick="removerItem(1)">Remover</button>
+<p id="carrinho1">Cachorro-quente sem verdura - quantidade:0</p>
+</div>
+  <h3 id="totalPedido">Total do pedido: R$ 0,00</h3>
+      </main>
+     <script>
+ let produtos = [
+    {
+        nome: "Cachorro-quente completo",
+        preco: 12,
+        quantidade: 0
+    },
+    {
+        nome: "Cachorro-quente sem verdura",
+        preco: 13,
+        quantidade: 0
+    }
+];
+
+function adicionarItem(indice) {
+    let produto = produtos[indice];
+
+    produto.quantidade = produto.quantidade + 1;
+
+    atualizarCarrinho(indice);
+    atualizarTotalPedido();
+
+}
+
+function removerItem(indice) {
+    let produto = produtos[indice];
+
+    if (produto.quantidade > 0) {
+        produto.quantidade = produto.quantidade - 1;
+    }
+
+    atualizarCarrinho(indice);
+    atualizarTotalPedido();
+}
+
+    atualizarCarrinho(indice);
+}
+
+function atualizarCarrinho(indice) {
+    let produto = produtos[indice];
+
+    let total = produto.quantidade * produto.preco;
+
+    document.getElementById("carrinho" + indice).innerText =
+        produto.nome +
+        " - quantidade: " +
+        produto.quantidade +
+        " - Total: R$ " +
+        total.toFixed(2);
+    atualizarTotalPedido();
+
+}
+
+function atualizarTotalPedido() {
+    let totalPedido = 0;
+
+    for (let produto of produtos) {
+        totalPedido = totalPedido + (produto.quantidade * produto.preco);
+    }
+
+    document.getElementById("totalPedido").innerText =
+    "Total do pedido: R$ " + totalPedido.toFixed(2);
+}
+     </script>
+     </body>
+     </html>
