@@ -1,0 +1,992 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Painel de Produção - Família Monaci</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            background-color: #f2f2f2;
+            font-family: Arial, sans-serif;
+        }
+
+        header {
+            background-color: #c62828;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        header h1 {
+            margin: 0;
+        }
+
+        header p {
+            margin-bottom: 0;
+            color: #ffd600;
+            font-weight: bold;
+        }
+
+        main {
+            padding: 20px;
+            max-width: 1600px;
+            margin: auto;
+        }
+
+        .topo-painel {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .atualizar {
+            background-color: #c62828;
+            color: white;
+            border: none;
+            padding: 12px 18px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .colunas {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 18px;
+            align-items: start;
+        }
+
+        .coluna {
+            background-color: #e9e9e9;
+            border-radius: 12px;
+            padding: 15px;
+            min-height: 300px;
+        }
+
+        .coluna h2 {
+            margin-top: 0;
+            text-align: center;
+        }
+
+        .contador {
+            display: block;
+            text-align: center;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+
+        .pedido {
+            background-color: white;
+            border-radius: 12px;
+            padding: 18px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .pedido.novo {
+            border-left: 7px solid #ffd600;
+        }
+
+        .pedido.preparo {
+            border-left: 7px solid #ff9800;
+        }
+
+        .pedido.pronto {
+            border-left: 7px solid #2e7d32;
+        }
+
+        .pedido.entrega {
+            border-left: 7px solid #1565c0;
+        }
+
+        .pedido-topo {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+        }
+
+        .numero-pedido {
+            font-size: 22px;
+            font-weight: bold;
+        }
+
+        .status {
+            padding: 7px 10px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 13px;
+            background-color: #eee;
+        }
+
+        .status-novo {
+            background-color: #ffd600;
+        }
+
+        .status-preparo {
+            background-color: #ff9800;
+            color: white;
+        }
+
+        .status-pronto {
+            background-color: #2e7d32;
+            color: white;
+        }
+
+        .status-entrega {
+            background-color: #1565c0;
+            color: white;
+        }
+
+        .alerta-retirada {
+            background-color: #e8f5e9;
+            color: #1b5e20;
+            padding: 10px;
+            border-radius: 8px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+
+        .alerta-entrega {
+            background-color: #e3f2fd;
+            color: #0d47a1;
+            padding: 10px;
+            border-radius: 8px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+
+        .dados {
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+
+        .itens {
+            background-color: #fafafa;
+            padding: 12px;
+            border-radius: 10px;
+        }
+
+        .item {
+            padding: 10px 0;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .item:last-child {
+            border-bottom: none;
+        }
+
+        .item-nome {
+            font-weight: bold;
+        }
+
+        .detalhe {
+            margin-left: 12px;
+            margin-top: 4px;
+            font-size: 14px;
+        }
+
+        .observacao {
+            font-weight: bold;
+        }
+
+        .horarios {
+            margin-top: 12px;
+            padding: 10px;
+            background-color: #f7f7f7;
+            border-radius: 8px;
+            font-size: 13px;
+        }
+
+        .acoes {
+            margin-top: 15px;
+        }
+
+        .botao-status {
+            width: 100%;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .botao-iniciar {
+            background-color: #ff9800;
+            color: white;
+        }
+
+        .botao-pronto {
+            background-color: #2e7d32;
+            color: white;
+        }
+
+        .botao-entrega {
+            background-color: #1565c0;
+            color: white;
+        }
+
+        .botao-finalizar {
+            background-color: #333;
+            color: white;
+        }
+
+        .mensagem-vazia {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        @media (max-width: 1200px) {
+            .colunas {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 700px) {
+            .colunas {
+                grid-template-columns: 1fr;
+            }
+
+            main {
+                padding: 10px;
+            }
+
+            .topo-painel {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .atualizar {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<header>
+    <h1>Família Monaci</h1>
+    <p>Painel de Produção</p>
+</header>
+
+<main>
+
+    <div class="topo-painel">
+
+        <h2>Pedidos ativos</h2>
+
+        <button
+            class="atualizar"
+            onclick="carregarPedidos()"
+        >
+            Atualizar pedidos
+        </button>
+
+    </div>
+
+    <div class="colunas">
+
+        <section class="coluna">
+
+            <h2>🆕 Novos</h2>
+
+            <span
+                class="contador"
+                id="contadorNovos"
+            >
+                0 pedido(s)
+            </span>
+
+            <div id="colunaNovos"></div>
+
+        </section>
+
+
+        <section class="coluna">
+
+            <h2>🔥 Em preparo</h2>
+
+            <span
+                class="contador"
+                id="contadorPreparo"
+            >
+                0 pedido(s)
+            </span>
+
+            <div id="colunaPreparo"></div>
+
+        </section>
+
+
+        <section class="coluna">
+
+            <h2>✅ Prontos</h2>
+
+            <span
+                class="contador"
+                id="contadorProntos"
+            >
+                0 pedido(s)
+            </span>
+
+            <div id="colunaProntos"></div>
+
+        </section>
+
+
+        <section class="coluna">
+
+            <h2>🛵 Em entrega</h2>
+
+            <span
+                class="contador"
+                id="contadorEntrega"
+            >
+                0 pedido(s)
+            </span>
+
+            <div id="colunaEntrega"></div>
+
+        </section>
+
+    </div>
+
+</main>
+
+
+<script>
+
+    function escaparHtml(texto) {
+
+        const div =
+            document.createElement("div");
+
+        div.innerText =
+            texto || "";
+
+        return div.innerHTML;
+    }
+
+
+    async function carregarPedidos() {
+
+        try {
+
+            const resposta =
+                await fetch("/pedidos");
+
+            const pedidos =
+                await resposta.json();
+
+
+            const novos =
+                pedidos.filter(
+                    pedido =>
+                        pedido.status === "NOVO"
+                );
+
+
+            const preparo =
+                pedidos.filter(
+                    pedido =>
+                        pedido.status === "EM PREPARO"
+                );
+
+
+            const prontos =
+                pedidos.filter(
+                    pedido =>
+                        pedido.status === "PRONTO PARA RETIRADA" ||
+                        pedido.status === "PRONTO PARA ENTREGA"
+                );
+
+
+            const emEntrega =
+                pedidos.filter(
+                    pedido =>
+                        pedido.status === "SAIU PARA ENTREGA"
+                );
+
+
+            document.getElementById(
+                "contadorNovos"
+            ).innerText =
+                novos.length +
+                " pedido(s)";
+
+
+            document.getElementById(
+                "contadorPreparo"
+            ).innerText =
+                preparo.length +
+                " pedido(s)";
+
+
+            document.getElementById(
+                "contadorProntos"
+            ).innerText =
+                prontos.length +
+                " pedido(s)";
+
+
+            document.getElementById(
+                "contadorEntrega"
+            ).innerText =
+                emEntrega.length +
+                " pedido(s)";
+
+
+            preencherColuna(
+                "colunaNovos",
+                novos,
+                "novo"
+            );
+
+
+            preencherColuna(
+                "colunaPreparo",
+                preparo,
+                "preparo"
+            );
+
+
+            preencherColuna(
+                "colunaProntos",
+                prontos,
+                "pronto"
+            );
+
+
+            preencherColuna(
+                "colunaEntrega",
+                emEntrega,
+                "entrega"
+            );
+
+
+        } catch (erro) {
+
+            console.error(
+                "Erro ao carregar pedidos:",
+                erro
+            );
+        }
+    }
+
+
+    function preencherColuna(
+        idColuna,
+        pedidos,
+        tipoColuna
+    ) {
+
+        const coluna =
+            document.getElementById(
+                idColuna
+            );
+
+
+        if (
+            pedidos.length === 0
+        ) {
+
+            coluna.innerHTML =
+                '<div class="mensagem-vazia">' +
+                "Nenhum pedido." +
+                "</div>";
+
+            return;
+        }
+
+
+        let html = "";
+
+
+        const pedidosOrdenados =
+            [...pedidos].reverse();
+
+
+        for (
+            const pedido of pedidosOrdenados
+        ) {
+
+            html +=
+                criarPedidoHTML(
+                    pedido,
+                    tipoColuna
+                );
+        }
+
+
+        coluna.innerHTML =
+            html;
+    }
+
+
+    function criarPedidoHTML(
+        pedido,
+        tipoColuna
+    ) {
+
+        let itensHTML = "";
+
+
+        for (
+            const item of pedido.itens
+        ) {
+
+            itensHTML +=
+                '<div class="item">';
+
+
+            itensHTML +=
+                '<div class="item-nome">' +
+                (item.quantidade || 1) +
+                "x " +
+                escaparHtml(
+                    item.nome
+                ) +
+                "</div>";
+
+
+            if (
+                item.molho
+            ) {
+
+                itensHTML +=
+                    '<div class="detalhe">' +
+                    "↳ Molho: " +
+                    escaparHtml(
+                        item.molho
+                    ) +
+                    "</div>";
+            }
+
+
+            if (
+                item.semMilho
+            ) {
+
+                itensHTML +=
+                    '<div class="detalhe">' +
+                    "↳ Sem milho" +
+                    "</div>";
+            }
+
+
+            if (
+                item.semAzeitona
+            ) {
+
+                itensHTML +=
+                    '<div class="detalhe">' +
+                    "↳ Sem azeitona" +
+                    "</div>";
+            }
+
+
+            if (
+                item.observacao
+            ) {
+
+                itensHTML +=
+                    '<div class="detalhe observacao">' +
+                    "↳ OBS: " +
+                    escaparHtml(
+                        item.observacao
+                    ) +
+                    "</div>";
+            }
+
+
+            itensHTML +=
+                "</div>";
+        }
+
+
+        let enderecoHTML = "";
+
+
+        if (
+            pedido.endereco
+        ) {
+
+            enderecoHTML =
+                "<div>" +
+                "<strong>Endereço:</strong> " +
+                escaparHtml(
+                    pedido.endereco
+                ) +
+                "</div>";
+        }
+
+
+        let alertaPronto = "";
+
+
+        if (
+            pedido.status ===
+            "PRONTO PARA RETIRADA"
+        ) {
+
+            alertaPronto =
+                '<div class="alerta-retirada">' +
+                "✅ PRONTO PARA RETIRADA" +
+                "</div>";
+        }
+
+
+        if (
+            pedido.status ===
+            "PRONTO PARA ENTREGA"
+        ) {
+
+            alertaPronto =
+                '<div class="alerta-entrega">' +
+                "🛵 PRONTO PARA ENTREGA" +
+                "</div>";
+        }
+
+
+        if (
+            pedido.status ===
+            "SAIU PARA ENTREGA"
+        ) {
+
+            alertaPronto =
+                '<div class="alerta-entrega">' +
+                "🛵 PEDIDO EM ROTA DE ENTREGA" +
+                "</div>";
+        }
+
+
+        let horariosHTML =
+            '<div class="horarios">' +
+            "<strong>Recebido:</strong> " +
+            escaparHtml(
+                pedido.data_hora
+            );
+
+
+        if (
+            pedido.hora_inicio_preparo
+        ) {
+
+            horariosHTML +=
+                "<br><strong>Início do preparo:</strong> " +
+                escaparHtml(
+                    pedido.hora_inicio_preparo
+                );
+        }
+
+
+        if (
+            pedido.hora_pronto
+        ) {
+
+            horariosHTML +=
+                "<br><strong>Pronto:</strong> " +
+                escaparHtml(
+                    pedido.hora_pronto
+                );
+        }
+
+
+        if (
+            pedido.hora_saida_entrega
+        ) {
+
+            horariosHTML +=
+                "<br><strong>Saiu para entrega:</strong> " +
+                escaparHtml(
+                    pedido.hora_saida_entrega
+                );
+        }
+
+
+        horariosHTML +=
+            "</div>";
+
+
+        let botaoHTML = "";
+
+
+        if (
+            tipoColuna === "novo"
+        ) {
+
+            botaoHTML =
+                '<button ' +
+                'class="botao-status botao-iniciar" ' +
+                'onclick="alterarStatus(' +
+                pedido.numero +
+                ", 'EM PREPARO'" +
+                ')">' +
+                "Iniciar preparo" +
+                "</button>";
+        }
+
+
+        if (
+            tipoColuna === "preparo"
+        ) {
+
+            botaoHTML =
+                '<button ' +
+                'class="botao-status botao-pronto" ' +
+                'onclick="alterarStatus(' +
+                pedido.numero +
+                ", 'PRONTO'" +
+                ')">' +
+                "Pedido pronto" +
+                "</button>";
+        }
+
+
+        if (
+            tipoColuna === "pronto"
+        ) {
+
+            if (
+                pedido.tipo === "retirada"
+            ) {
+
+                botaoHTML =
+                    '<button ' +
+                    'class="botao-status botao-finalizar" ' +
+                    'onclick="alterarStatus(' +
+                    pedido.numero +
+                    ", 'FINALIZADO'" +
+                    ')">' +
+                    "Cliente retirou" +
+                    "</button>";
+
+            } else {
+
+                botaoHTML =
+                    '<button ' +
+                    'class="botao-status botao-entrega" ' +
+                    'onclick="alterarStatus(' +
+                    pedido.numero +
+                    ", 'SAIU PARA ENTREGA'" +
+                    ')">' +
+                    "Saiu para entrega" +
+                    "</button>";
+            }
+        }
+
+
+        if (
+            tipoColuna === "entrega"
+        ) {
+
+            botaoHTML =
+                '<button ' +
+                'class="botao-status botao-finalizar" ' +
+                'onclick="alterarStatus(' +
+                pedido.numero +
+                ", 'FINALIZADO'" +
+                ')">' +
+                "Entrega concluída" +
+                "</button>";
+        }
+
+
+        let classeStatus =
+            "status-novo";
+
+
+        if (
+            tipoColuna === "preparo"
+        ) {
+
+            classeStatus =
+                "status-preparo";
+        }
+
+
+        if (
+            tipoColuna === "pronto"
+        ) {
+
+            classeStatus =
+                "status-pronto";
+        }
+
+
+        if (
+            tipoColuna === "entrega"
+        ) {
+
+            classeStatus =
+                "status-entrega";
+        }
+
+
+        return `
+            <div class="pedido ${tipoColuna}">
+
+                <div class="pedido-topo">
+
+                    <div class="numero-pedido">
+                        Pedido #${String(
+                            pedido.numero
+                        ).padStart(4, "0")}
+                    </div>
+
+                    <div
+                        class="status ${classeStatus}"
+                    >
+                        ${escaparHtml(
+                            pedido.status
+                        )}
+                    </div>
+
+                </div>
+
+                ${alertaPronto}
+
+                <div class="dados">
+
+                    <div>
+                        <strong>Cliente:</strong>
+                        ${escaparHtml(
+                            pedido.cliente
+                        )}
+                    </div>
+
+                    <div>
+                        <strong>Tipo:</strong>
+                        ${
+                            pedido.tipo === "entrega"
+                                ? "Entrega"
+                                : "Retirada"
+                        }
+                    </div>
+
+                    ${enderecoHTML}
+
+                    <div>
+                        <strong>Pagamento:</strong>
+                        ${escaparHtml(
+                            pedido.pagamento
+                        )}
+                    </div>
+
+                    <div>
+                        <strong>Total:</strong>
+                        R$ ${Number(
+                            pedido.total
+                        ).toFixed(2)}
+                    </div>
+
+                </div>
+
+                <h3>Itens do pedido</h3>
+
+                <div class="itens">
+                    ${itensHTML}
+                </div>
+
+                ${horariosHTML}
+
+                <div class="acoes">
+                    ${botaoHTML}
+                </div>
+
+            </div>
+        `;
+    }
+
+
+    async function alterarStatus(
+        numero,
+        novoStatus
+    ) {
+
+        try {
+
+            const resposta =
+                await fetch(
+                    "/pedidos/" +
+                    numero +
+                    "/status",
+                    {
+                        method: "PUT",
+
+                        headers: {
+                            "Content-Type":
+                                "application/json"
+                        },
+
+                        body:
+                            JSON.stringify({
+                                status:
+                                    novoStatus
+                            })
+                    }
+                );
+
+
+            const resultado =
+                await resposta.json();
+
+
+            if (
+                !resultado.sucesso
+            ) {
+
+                alert(
+                    resultado.mensagem ||
+                    "Não foi possível alterar o status."
+                );
+
+                return;
+            }
+
+
+            carregarPedidos();
+
+
+        } catch (erro) {
+
+            console.error(
+                erro
+            );
+
+
+            alert(
+                "Erro ao alterar o status."
+            );
+        }
+    }
+
+
+    carregarPedidos();
+
+
+    setInterval(
+        carregarPedidos,
+        5000
+    );
+
+</script>
+
+</body>
+
+</html>
