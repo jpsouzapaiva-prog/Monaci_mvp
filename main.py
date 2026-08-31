@@ -1,3 +1,6 @@
+from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate
+
 from flask import Flask, render_template, request, jsonify
 from datetime import datetime
 
@@ -5,6 +8,12 @@ from cardapio import cardapio
 
 
 app = Flask(__name__)
+
+app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///monaci.db"
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
+db = SQLAlchemy(app)
+migrate = Migrate(app, db)
 
 
 # ============================================================
@@ -117,10 +126,185 @@ for adicional in cardapio.get(
 
 
 # ============================================================
-# PEDIDOS
+# MODELOS DO BANCO DE DADOS
 # ============================================================
 
-pedidos = []
+class Pedido(db.Model):
+
+    __tablename__ = "pedidos"
+
+    id = db.Column(
+        db.Integer,
+        primary_key=True
+    )
+
+    cliente = db.Column(
+        db.String(100),
+        nullable=False
+    )
+
+    tipo = db.Column(
+        db.String(20),
+        nullable=False
+    )
+
+    endereco = db.Column(
+        db.String(500),
+        nullable=False,
+        default=""
+    )
+
+    pagamento = db.Column(
+        db.String(200),
+        nullable=False,
+        default=""
+    )
+
+    total = db.Column(
+        db.Numeric(10, 2),
+        nullable=False,
+        default=0
+    )
+
+    status = db.Column(
+        db.String(50),
+        nullable=False,
+        default="NOVO"
+    )
+
+    data_hora = db.Column(
+        db.DateTime,
+        nullable=False,
+        default=datetime.now
+    )
+
+    hora_inicio_preparo = db.Column(
+        db.DateTime,
+        nullable=True
+    )
+
+    hora_pronto = db.Column(
+        db.DateTime,
+        nullable=True
+    )
+
+    hora_saida_entrega = db.Column(
+        db.DateTime,
+        nullable=True
+    )
+
+    hora_finalizado = db.Column(
+        db.DateTime,
+        nullable=True
+    )
+
+    itens = db.relationship(
+        "ItemPedido",
+        backref="pedido",
+        lazy=True,
+        cascade="all, delete-orphan",
+        order_by="ItemPedido.id"
+    )
+
+
+class ItemPedido(db.Model):
+
+    __tablename__ = "itens_pedido"
+
+    id = db.Column(
+        db.Integer,
+        primary_key=True
+    )
+
+    pedido_id = db.Column(
+        db.Integer,
+        db.ForeignKey(
+            "pedidos.id"
+        ),
+        nullable=False
+    )
+
+    produto_id = db.Column(
+        db.String(100),
+        nullable=False
+    )
+
+    nome = db.Column(
+        db.String(200),
+        nullable=False
+    )
+
+    categoria = db.Column(
+        db.String(100),
+        nullable=False,
+        default=""
+    )
+
+    setor = db.Column(
+        db.String(100),
+        nullable=False,
+        default=""
+    )
+
+    preco = db.Column(
+        db.Numeric(10, 2),
+        nullable=False,
+        default=0
+    )
+
+    quantidade = db.Column(
+        db.Integer,
+        nullable=False,
+        default=1
+    )
+
+    retirados = db.Column(
+        db.JSON,
+        nullable=False,
+        default=list
+    )
+
+    adicionais = db.Column(
+        db.JSON,
+        nullable=False,
+        default=list
+    )
+
+    valor_adicionais = db.Column(
+        db.Numeric(10, 2),
+        nullable=False,
+        default=0
+    )
+
+    molho = db.Column(
+        db.String(100),
+        nullable=False,
+        default=""
+    )
+
+    preparo_suco = db.Column(
+        db.String(50),
+        nullable=False,
+        default=""
+    )
+
+    acucar_suco = db.Column(
+        db.String(50),
+        nullable=False,
+        default=""
+    )
+
+    observacao = db.Column(
+        db.String(300),
+        nullable=False,
+        default=""
+    )
+
+    subtotal = db.Column(
+        db.Numeric(10, 2),
+        nullable=False,
+        default=0
+    )
 
 
 # ============================================================
@@ -238,6 +422,145 @@ def normalizar_texto(
     return resultado
 
 
+def formatar_hora(
+    valor
+):
+
+    if valor is None:
+
+        return ""
+
+    return valor.strftime(
+        "%H:%M:%S"
+    )
+
+
+def pedido_para_dict(
+    pedido
+):
+
+    return {
+
+        "numero":
+            pedido.id,
+
+        "numero_formatado":
+            str(
+                pedido.id
+            ).zfill(
+                4
+            ),
+
+        "cliente":
+            pedido.cliente,
+
+        "tipo":
+            pedido.tipo,
+
+        "endereco":
+            pedido.endereco or "",
+
+        "pagamento":
+            pedido.pagamento or "",
+
+        "total":
+            float(
+                pedido.total
+            ),
+
+        "itens": [
+            item_para_dict(
+                item
+            )
+            for item in pedido.itens
+        ],
+
+        "status":
+            pedido.status,
+
+        "data_hora":
+            pedido.data_hora.strftime(
+                "%d/%m/%Y %H:%M:%S"
+            ),
+
+        "hora_inicio_preparo":
+            formatar_hora(
+                pedido.hora_inicio_preparo
+            ),
+
+        "hora_pronto":
+            formatar_hora(
+                pedido.hora_pronto
+            ),
+
+        "hora_saida_entrega":
+            formatar_hora(
+                pedido.hora_saida_entrega
+            ),
+
+        "hora_finalizado":
+            formatar_hora(
+                pedido.hora_finalizado
+            )
+    }
+
+
+def item_para_dict(
+    item
+):
+
+    return {
+
+        "id":
+            item.produto_id,
+
+        "nome":
+            item.nome,
+
+        "categoria":
+            item.categoria,
+
+        "setor":
+            item.setor,
+
+        "preco":
+            float(
+                item.preco
+            ),
+
+        "quantidade":
+            item.quantidade,
+
+        "retirados":
+            item.retirados or [],
+
+        "adicionais":
+            item.adicionais or [],
+
+        "valorAdicionais":
+            float(
+                item.valor_adicionais
+            ),
+
+        "molho":
+            item.molho or "",
+
+        "preparoSuco":
+            item.preparo_suco or "",
+
+        "acucarSuco":
+            item.acucar_suco or "",
+
+        "observacao":
+            item.observacao or "",
+
+        "subtotal":
+            float(
+                item.subtotal
+            )
+    }
+
+
 # ============================================================
 # INGREDIENTES QUE PODEM SER RETIRADOS
 # ============================================================
@@ -265,10 +588,6 @@ def ingredientes_retiraveis(
         return []
 
 
-    # ========================================================
-    # HOT DOG
-    # ========================================================
-
     if categoria == "hot_dog":
 
         permitidos = [
@@ -291,10 +610,6 @@ def ingredientes_retiraveis(
             in permitidos
         ]
 
-
-    # ========================================================
-    # SANDUICHES
-    # ========================================================
 
     if categoria == "sanduiches":
 
@@ -327,10 +642,6 @@ def ingredientes_retiraveis(
         ]
 
 
-    # ========================================================
-    # PIZZA BROTINHO
-    # ========================================================
-
     if categoria == "pizza_brotinho":
 
         return [
@@ -346,10 +657,6 @@ def ingredientes_retiraveis(
             == "ovo de codorna"
         ]
 
-
-    # ========================================================
-    # ACAI
-    # ========================================================
 
     if categoria == "acai":
 
@@ -495,10 +802,6 @@ def validar_adicionais(
             )
 
 
-        # ====================================================
-        # ADICIONAL SEM NOME
-        # ====================================================
-
         if not nome:
 
             return (
@@ -508,10 +811,6 @@ def validar_adicionais(
             )
 
 
-        # ====================================================
-        # ADICIONAL DUPLICADO
-        # ====================================================
-
         if nome in nomes_processados:
 
             continue
@@ -519,10 +818,6 @@ def validar_adicionais(
 
         preco_oficial = None
 
-
-        # ====================================================
-        # HOT DOG
-        # ====================================================
 
         if categoria == "hot_dog":
 
@@ -548,10 +843,6 @@ def validar_adicionais(
                 )
 
 
-        # ====================================================
-        # SANDUICHES
-        # ====================================================
-
         elif categoria == "sanduiches":
 
             if (
@@ -565,10 +856,6 @@ def validar_adicionais(
                     ]
                 )
 
-
-        # ====================================================
-        # ADICIONAL NAO EXISTE
-        # ====================================================
 
         if preco_oficial is None:
 
@@ -634,10 +921,6 @@ def montar_item_seguro(
         )
 
 
-    # ========================================================
-    # PRODUTO
-    # ========================================================
-
     produto_id = texto_seguro(
         item_recebido.get(
             "id"
@@ -659,10 +942,6 @@ def montar_item_seguro(
         )
 
 
-    # ========================================================
-    # QUANTIDADE
-    # ========================================================
-
     quantidade = validar_quantidade(
         item_recebido.get(
             "quantidade"
@@ -678,10 +957,6 @@ def montar_item_seguro(
         )
 
 
-    # ========================================================
-    # RETIRADOS
-    # ========================================================
-
     retirados = validar_retirados(
         produto,
         item_recebido.get(
@@ -690,10 +965,6 @@ def montar_item_seguro(
         )
     )
 
-
-    # ========================================================
-    # ADICIONAIS
-    # ========================================================
 
     (
         adicionais,
@@ -724,10 +995,6 @@ def montar_item_seguro(
     )
 
 
-    # ========================================================
-    # MOLHO
-    # ========================================================
-
     molho = ""
 
 
@@ -754,10 +1021,6 @@ def montar_item_seguro(
                 "Todos os molhos"
             )
 
-
-    # ========================================================
-    # PREPARO DO SUCO
-    # ========================================================
 
     preparo_suco = ""
 
@@ -788,10 +1051,6 @@ def montar_item_seguro(
             )
 
 
-    # ========================================================
-    # ACUCAR DO SUCO
-    # ========================================================
-
     acucar_suco = ""
 
 
@@ -821,10 +1080,6 @@ def montar_item_seguro(
             )
 
 
-    # ========================================================
-    # OBSERVACAO
-    # ========================================================
-
     observacao = texto_seguro(
         item_recebido.get(
             "observacao"
@@ -832,10 +1087,6 @@ def montar_item_seguro(
         300
     )
 
-
-    # ========================================================
-    # PRECO OFICIAL DO PRODUTO
-    # ========================================================
 
     preco_produto = float(
         produto.get(
@@ -856,10 +1107,6 @@ def montar_item_seguro(
         * quantidade
     )
 
-
-    # ========================================================
-    # ITEM RECONSTRUIDO PELO SERVIDOR
-    # ========================================================
 
     item_seguro = {
 
@@ -982,10 +1229,6 @@ def criar_pedido():
         }), 400
 
 
-    # ========================================================
-    # CLIENTE
-    # ========================================================
-
     cliente = texto_seguro(
         dados.get(
             "cliente"
@@ -1002,10 +1245,6 @@ def criar_pedido():
                 "Nome do cliente nao informado."
         }), 400
 
-
-    # ========================================================
-    # TIPO DO PEDIDO
-    # ========================================================
 
     tipo_pedido = texto_seguro(
         dados.get(
@@ -1028,10 +1267,6 @@ def criar_pedido():
         }), 400
 
 
-    # ========================================================
-    # ENDERECO
-    # ========================================================
-
     endereco = texto_seguro(
         dados.get(
             "endereco"
@@ -1052,10 +1287,6 @@ def criar_pedido():
         }), 400
 
 
-    # ========================================================
-    # PAGAMENTO
-    # ========================================================
-
     pagamento = texto_seguro(
         dados.get(
             "pagamento"
@@ -1063,10 +1294,6 @@ def criar_pedido():
         200
     )
 
-
-    # ========================================================
-    # ITENS
-    # ========================================================
 
     itens_recebidos = dados.get(
         "itens",
@@ -1107,10 +1334,6 @@ def criar_pedido():
                 "Quantidade de itens acima do permitido."
         }), 400
 
-
-    # ========================================================
-    # VALIDAR E RECONSTRUIR ITENS
-    # ========================================================
 
     itens_seguros = []
 
@@ -1154,87 +1377,125 @@ def criar_pedido():
     )
 
 
-    # ========================================================
-    # NUMERO DO PEDIDO
-    # ========================================================
+    try:
 
-    numero_pedido = (
-        len(pedidos) + 1
-    )
+        novo_pedido = Pedido(
 
+            cliente=
+                cliente,
 
-    # ========================================================
-    # CRIAR PEDIDO
-    # ========================================================
+            tipo=
+                tipo_pedido,
 
-    novo_pedido = {
+            endereco=
+                endereco,
 
-        "numero":
-            numero_pedido,
+            pagamento=
+                pagamento,
 
-        "numero_formatado":
-            str(
-                numero_pedido
-            ).zfill(
-                4
-            ),
+            total=
+                total_calculado,
 
-        "cliente":
-            cliente,
+            status=
+                "NOVO",
 
-        "tipo":
-            tipo_pedido,
-
-        "endereco":
-            endereco,
-
-        "pagamento":
-            pagamento,
-
-        # ====================================================
-        # TOTAL OFICIAL CALCULADO PELO BACKEND
-        # ====================================================
-
-        "total":
-            total_calculado,
-
-        # ====================================================
-        # ITENS OFICIAIS RECONSTRUIDOS PELO BACKEND
-        # ====================================================
-
-        "itens":
-            itens_seguros,
-
-        "status":
-            "NOVO",
-
-        "data_hora":
-            datetime.now().strftime(
-                "%d/%m/%Y %H:%M:%S"
-            ),
-
-        "hora_inicio_preparo":
-            "",
-
-        "hora_pronto":
-            "",
-
-        "hora_saida_entrega":
-            "",
-
-        "hora_finalizado":
-            ""
-    }
+            data_hora=
+                datetime.now()
+        )
 
 
-    pedidos.append(
+        db.session.add(
+            novo_pedido
+        )
+
+
+        db.session.flush()
+
+
+        for item in itens_seguros:
+
+            novo_item = ItemPedido(
+
+                pedido_id=
+                    novo_pedido.id,
+
+                produto_id=
+                    item["id"],
+
+                nome=
+                    item["nome"],
+
+                categoria=
+                    item["categoria"],
+
+                setor=
+                    item["setor"],
+
+                preco=
+                    item["preco"],
+
+                quantidade=
+                    item["quantidade"],
+
+                retirados=
+                    item["retirados"],
+
+                adicionais=
+                    item["adicionais"],
+
+                valor_adicionais=
+                    item[
+                        "valorAdicionais"
+                    ],
+
+                molho=
+                    item["molho"],
+
+                preparo_suco=
+                    item[
+                        "preparoSuco"
+                    ],
+
+                acucar_suco=
+                    item[
+                        "acucarSuco"
+                    ],
+
+                observacao=
+                    item["observacao"],
+
+                subtotal=
+                    item["subtotal"]
+            )
+
+
+            db.session.add(
+                novo_item
+            )
+
+
+        db.session.commit()
+
+
+    except Exception:
+
+        db.session.rollback()
+
+        app.logger.exception(
+            "Erro ao salvar pedido no banco."
+        )
+
+        return jsonify({
+            "sucesso": False,
+            "mensagem":
+                "Nao foi possivel salvar o pedido."
+        }), 500
+
+
+    pedido_dict = pedido_para_dict(
         novo_pedido
     )
 
-
-    # ========================================================
-    # MOSTRAR PEDIDO NO CONSOLE
-    # ========================================================
 
     print(
         "\n"
@@ -1248,7 +1509,7 @@ def criar_pedido():
 
     print(
         "PEDIDO #",
-        novo_pedido[
+        pedido_dict[
             "numero_formatado"
         ]
     )
@@ -1256,7 +1517,7 @@ def criar_pedido():
 
     print(
         "CLIENTE:",
-        novo_pedido[
+        pedido_dict[
             "cliente"
         ]
     )
@@ -1264,19 +1525,19 @@ def criar_pedido():
 
     print(
         "TIPO:",
-        novo_pedido[
+        pedido_dict[
             "tipo"
         ]
     )
 
 
-    if novo_pedido[
+    if pedido_dict[
         "endereco"
     ]:
 
         print(
             "ENDERECO:",
-            novo_pedido[
+            pedido_dict[
                 "endereco"
             ]
         )
@@ -1284,7 +1545,7 @@ def criar_pedido():
 
     print(
         "PAGAMENTO:",
-        novo_pedido[
+        pedido_dict[
             "pagamento"
         ]
     )
@@ -1292,7 +1553,7 @@ def criar_pedido():
 
     print(
         "TOTAL CALCULADO PELO SERVIDOR: R$",
-        f'{novo_pedido["total"]:.2f}'
+        f'{pedido_dict["total"]:.2f}'
     )
 
 
@@ -1301,7 +1562,7 @@ def criar_pedido():
     )
 
 
-    for item in novo_pedido[
+    for item in pedido_dict[
         "itens"
     ]:
 
@@ -1318,10 +1579,6 @@ def criar_pedido():
         )
 
 
-        # ====================================================
-        # MOLHO
-        # ====================================================
-
         molho = item.get(
             "molho",
             ""
@@ -1335,10 +1592,6 @@ def criar_pedido():
                 molho
             )
 
-
-        # ====================================================
-        # RETIRADOS
-        # ====================================================
 
         retirados = item.get(
             "retirados",
@@ -1355,10 +1608,6 @@ def criar_pedido():
                 )
             )
 
-
-        # ====================================================
-        # ADICIONAIS
-        # ====================================================
 
         adicionais = item.get(
             "adicionais",
@@ -1386,10 +1635,6 @@ def criar_pedido():
                 )
 
 
-        # ====================================================
-        # PREPARO DO SUCO
-        # ====================================================
-
         preparo_suco = item.get(
             "preparoSuco",
             ""
@@ -1403,10 +1648,6 @@ def criar_pedido():
                 preparo_suco
             )
 
-
-        # ====================================================
-        # ACUCAR DO SUCO
-        # ====================================================
 
         acucar_suco = item.get(
             "acucarSuco",
@@ -1422,10 +1663,6 @@ def criar_pedido():
             )
 
 
-        # ====================================================
-        # OBSERVACAO
-        # ====================================================
-
         observacao = item.get(
             "observacao",
             ""
@@ -1440,10 +1677,6 @@ def criar_pedido():
             )
 
 
-        # ====================================================
-        # SUBTOTAL
-        # ====================================================
-
         print(
             "  Subtotal: R$",
             f'{item.get("subtotal", 0):.2f}'
@@ -1457,7 +1690,7 @@ def criar_pedido():
 
     print(
         "STATUS:",
-        novo_pedido[
+        pedido_dict[
             "status"
         ]
     )
@@ -1465,7 +1698,7 @@ def criar_pedido():
 
     print(
         "HORARIO:",
-        novo_pedido[
+        pedido_dict[
             "data_hora"
         ]
     )
@@ -1482,12 +1715,14 @@ def criar_pedido():
             True,
 
         "numero":
-            numero_pedido,
+            novo_pedido.id,
 
         "numero_formatado":
-            novo_pedido[
-                "numero_formatado"
-            ],
+            str(
+                novo_pedido.id
+            ).zfill(
+                4
+            ),
 
         "total":
             total_calculado,
@@ -1507,9 +1742,19 @@ def criar_pedido():
 )
 def listar_pedidos():
 
-    return jsonify(
-        pedidos
-    )
+    pedidos_banco = Pedido.query.order_by(
+        Pedido.id.asc()
+    ).all()
+
+
+    return jsonify([
+
+        pedido_para_dict(
+            pedido
+        )
+
+        for pedido in pedidos_banco
+    ])
 
 
 # ============================================================
@@ -1570,190 +1815,156 @@ def alterar_status(
         }), 400
 
 
-    for pedido in pedidos:
+    pedido = db.session.get(
+        Pedido,
+        numero
+    )
+
+
+    if pedido is None:
+
+        return jsonify({
+            "sucesso": False,
+            "mensagem":
+                "Pedido nao encontrado."
+        }), 404
+
+
+    agora = datetime.now()
+
+
+    if (
+        novo_status
+        == "EM PREPARO"
+    ):
+
+        pedido.status = (
+            "EM PREPARO"
+        )
+
+        pedido.hora_inicio_preparo = (
+            agora
+        )
+
+
+    elif (
+        novo_status
+        == "PRONTO"
+    ):
 
         if (
-            pedido[
-                "numero"
-            ]
-            == numero
+            pedido.tipo
+            == "retirada"
         ):
 
+            pedido.status = (
+                "PRONTO PARA RETIRADA"
+            )
 
-            # ================================================
-            # EM PREPARO
-            # ================================================
+        else:
 
-            if (
-                novo_status
-                == "EM PREPARO"
-            ):
-
-                pedido[
-                    "status"
-                ] = (
-                    "EM PREPARO"
-                )
+            pedido.status = (
+                "PRONTO PARA ENTREGA"
+            )
 
 
-                pedido[
-                    "hora_inicio_preparo"
-                ] = datetime.now().strftime(
-                    "%H:%M:%S"
-                )
+        pedido.hora_pronto = (
+            agora
+        )
 
 
-            # ================================================
-            # PRONTO
-            # ================================================
+    elif (
+        novo_status
+        == "SAIU PARA ENTREGA"
+    ):
 
-            elif (
-                novo_status
-                == "PRONTO"
-            ):
-
-                if (
-                    pedido[
-                        "tipo"
-                    ]
-                    == "retirada"
-                ):
-
-                    pedido[
-                        "status"
-                    ] = (
-                        "PRONTO PARA RETIRADA"
-                    )
-
-                else:
-
-                    pedido[
-                        "status"
-                    ] = (
-                        "PRONTO PARA ENTREGA"
-                    )
-
-
-                pedido[
-                    "hora_pronto"
-                ] = datetime.now().strftime(
-                    "%H:%M:%S"
-                )
-
-
-            # ================================================
-            # SAIU PARA ENTREGA
-            # ================================================
-
-            elif (
-                novo_status
-                == "SAIU PARA ENTREGA"
-            ):
-
-                if (
-                    pedido[
-                        "tipo"
-                    ]
-                    != "entrega"
-                ):
-
-                    return jsonify({
-                        "sucesso": False,
-                        "mensagem":
-                            "Pedido de retirada nao pode sair para entrega."
-                    }), 400
-
-
-                if (
-                    pedido[
-                        "status"
-                    ]
-                    != "PRONTO PARA ENTREGA"
-                ):
-
-                    return jsonify({
-                        "sucesso": False,
-                        "mensagem":
-                            "O pedido precisa estar pronto antes de sair para entrega."
-                    }), 400
-
-
-                pedido[
-                    "status"
-                ] = (
-                    "SAIU PARA ENTREGA"
-                )
-
-
-                pedido[
-                    "hora_saida_entrega"
-                ] = datetime.now().strftime(
-                    "%H:%M:%S"
-                )
-
-
-            # ================================================
-            # FINALIZADO
-            # ================================================
-
-            elif (
-                novo_status
-                == "FINALIZADO"
-            ):
-
-                pedido[
-                    "status"
-                ] = (
-                    "FINALIZADO"
-                )
-
-
-                pedido[
-                    "hora_finalizado"
-                ] = datetime.now().strftime(
-                    "%H:%M:%S"
-                )
-
-
-            # ================================================
-            # VOLTAR PARA NOVO
-            # ================================================
-
-            elif (
-                novo_status
-                == "NOVO"
-            ):
-
-                pedido[
-                    "status"
-                ] = (
-                    "NOVO"
-                )
-
+        if (
+            pedido.tipo
+            != "entrega"
+        ):
 
             return jsonify({
-
-                "sucesso":
-                    True,
-
+                "sucesso": False,
                 "mensagem":
-                    "Status atualizado.",
+                    "Pedido de retirada nao pode sair para entrega."
+            }), 400
 
-                "status":
-                    pedido[
-                        "status"
-                    ]
-            })
+
+        if (
+            pedido.status
+            != "PRONTO PARA ENTREGA"
+        ):
+
+            return jsonify({
+                "sucesso": False,
+                "mensagem":
+                    "O pedido precisa estar pronto antes de sair para entrega."
+            }), 400
+
+
+        pedido.status = (
+            "SAIU PARA ENTREGA"
+        )
+
+        pedido.hora_saida_entrega = (
+            agora
+        )
+
+
+    elif (
+        novo_status
+        == "FINALIZADO"
+    ):
+
+        pedido.status = (
+            "FINALIZADO"
+        )
+
+        pedido.hora_finalizado = (
+            agora
+        )
+
+
+    elif (
+        novo_status
+        == "NOVO"
+    ):
+
+        pedido.status = (
+            "NOVO"
+        )
+
+
+    try:
+
+        db.session.commit()
+
+    except Exception:
+
+        db.session.rollback()
+
+        app.logger.exception(
+            "Erro ao atualizar status do pedido."
+        )
+
+        return jsonify({
+            "sucesso": False,
+            "mensagem":
+                "Nao foi possivel atualizar o status."
+        }), 500
 
 
     return jsonify({
 
-        "sucesso": False,
+        "sucesso":
+            True,
 
         "mensagem":
-            "Pedido nao encontrado."
+            "Status atualizado.",
 
-    }), 404
+        "status":
+            pedido.status
+    })
 
 
 # ============================================================
