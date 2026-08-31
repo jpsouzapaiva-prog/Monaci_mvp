@@ -1,19 +1,191 @@
-from flask_sqlalchemy import SQLAlchemy
+from flask import Flask, render_template, request, jsonify, session, redirect, url_for, render_template_string
 from flask_migrate import Migrate
-
-from flask import Flask, render_template, request, jsonify
 from datetime import datetime
+import os
+import hmac
+from functools import wraps
 
 from cardapio import cardapio
+from config import obter_configuracao
+from models import db, Empresa, Pedido, ItemPedido
 
+
+# ============================================================
+# APLICACAO
+# ============================================================
 
 app = Flask(__name__)
 
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///monaci.db"
-app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+app.config.from_object(
+    obter_configuracao()
+)
 
-db = SQLAlchemy(app)
-migrate = Migrate(app, db)
+db.init_app(
+    app
+)
+
+migrate = Migrate(
+    app,
+    db
+)
+
+
+# ============================================================
+# SEGURANCA DE SESSAO
+# ============================================================
+
+app.config.setdefault(
+    "SESSION_COOKIE_HTTPONLY",
+    True
+)
+
+app.config.setdefault(
+    "SESSION_COOKIE_SAMESITE",
+    "Lax"
+)
+
+app.config.setdefault(
+    "PERMANENT_SESSION_LIFETIME",
+    60 * 60 * 8
+)
+
+
+# ============================================================
+# AUTENTICACAO DO PAINEL
+# ============================================================
+
+LOGIN_HTML = """
+<!doctype html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Monaci - Acesso ao painel</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: Arial, sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+        .box {
+            width: 100%;
+            max-width: 390px;
+            background: white;
+            border-radius: 16px;
+            padding: 28px;
+            box-shadow: 0 12px 35px rgba(0,0,0,.10);
+        }
+        h1 { margin: 0 0 8px; font-size: 26px; }
+        p { margin: 0 0 22px; color: #666; }
+        label { display: block; margin-bottom: 8px; font-weight: 700; }
+        input {
+            width: 100%;
+            padding: 13px 14px;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            font-size: 16px;
+        }
+        button {
+            width: 100%;
+            margin-top: 16px;
+            padding: 13px;
+            border: 0;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .erro {
+            background: #fff0f0;
+            border: 1px solid #efb4b4;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="box">
+        <h1>Painel Monaci</h1>
+        <p>Acesso restrito à operação.</p>
+
+        {% if erro %}
+        <div class="erro">{{ erro }}</div>
+        {% endif %}
+
+        <form method="post">
+            <label for="senha">Senha</label>
+            <input
+                id="senha"
+                name="senha"
+                type="password"
+                autocomplete="current-password"
+                required
+                autofocus
+            >
+            <button type="submit">Entrar</button>
+        </form>
+    </div>
+</body>
+</html>
+"""
+
+
+def senha_painel_configurada():
+    return os.getenv(
+        "PAINEL_PASSWORD",
+        ""
+    ).strip()
+
+
+def painel_autenticado():
+    return session.get(
+        "painel_autenticado"
+    ) is True
+
+
+def login_painel_obrigatorio(
+    funcao
+):
+
+    @wraps(
+        funcao
+    )
+    def wrapper(
+        *args,
+        **kwargs
+    ):
+
+        if not painel_autenticado():
+
+            if request.path.startswith(
+                "/pedidos"
+            ):
+
+                return jsonify({
+                    "sucesso": False,
+                    "mensagem":
+                        "Autenticacao necessaria."
+                }), 401
+
+            return redirect(
+                url_for(
+                    "login"
+                )
+            )
+
+        return funcao(
+            *args,
+            **kwargs
+        )
+
+    return wrapper
 
 
 # ============================================================
@@ -50,6 +222,25 @@ acucar_suco_permitidos = [
     "Com açúcar",
     "Sem açúcar"
 ]
+
+
+# ============================================================
+# EMPRESA PADRAO DO MVP
+# ============================================================
+
+EMPRESA_PADRAO_SLUG = "familia-monaci"
+
+
+def buscar_empresa_padrao():
+    """
+    No MVP existe uma empresa operacional ativa.
+    O navegador nao escolhe empresa_id: o backend resolve a empresa
+    pelo slug configurado no servidor.
+    """
+    return Empresa.query.filter_by(
+        slug=EMPRESA_PADRAO_SLUG,
+        ativa=True
+    ).first()
 
 
 # ============================================================
@@ -123,188 +314,6 @@ for adicional in cardapio.get(
                 0
             )
         )
-
-
-# ============================================================
-# MODELOS DO BANCO DE DADOS
-# ============================================================
-
-class Pedido(db.Model):
-
-    __tablename__ = "pedidos"
-
-    id = db.Column(
-        db.Integer,
-        primary_key=True
-    )
-
-    cliente = db.Column(
-        db.String(100),
-        nullable=False
-    )
-
-    tipo = db.Column(
-        db.String(20),
-        nullable=False
-    )
-
-    endereco = db.Column(
-        db.String(500),
-        nullable=False,
-        default=""
-    )
-
-    pagamento = db.Column(
-        db.String(200),
-        nullable=False,
-        default=""
-    )
-
-    total = db.Column(
-        db.Numeric(10, 2),
-        nullable=False,
-        default=0
-    )
-
-    status = db.Column(
-        db.String(50),
-        nullable=False,
-        default="NOVO"
-    )
-
-    data_hora = db.Column(
-        db.DateTime,
-        nullable=False,
-        default=datetime.now
-    )
-
-    hora_inicio_preparo = db.Column(
-        db.DateTime,
-        nullable=True
-    )
-
-    hora_pronto = db.Column(
-        db.DateTime,
-        nullable=True
-    )
-
-    hora_saida_entrega = db.Column(
-        db.DateTime,
-        nullable=True
-    )
-
-    hora_finalizado = db.Column(
-        db.DateTime,
-        nullable=True
-    )
-
-    itens = db.relationship(
-        "ItemPedido",
-        backref="pedido",
-        lazy=True,
-        cascade="all, delete-orphan",
-        order_by="ItemPedido.id"
-    )
-
-
-class ItemPedido(db.Model):
-
-    __tablename__ = "itens_pedido"
-
-    id = db.Column(
-        db.Integer,
-        primary_key=True
-    )
-
-    pedido_id = db.Column(
-        db.Integer,
-        db.ForeignKey(
-            "pedidos.id"
-        ),
-        nullable=False
-    )
-
-    produto_id = db.Column(
-        db.String(100),
-        nullable=False
-    )
-
-    nome = db.Column(
-        db.String(200),
-        nullable=False
-    )
-
-    categoria = db.Column(
-        db.String(100),
-        nullable=False,
-        default=""
-    )
-
-    setor = db.Column(
-        db.String(100),
-        nullable=False,
-        default=""
-    )
-
-    preco = db.Column(
-        db.Numeric(10, 2),
-        nullable=False,
-        default=0
-    )
-
-    quantidade = db.Column(
-        db.Integer,
-        nullable=False,
-        default=1
-    )
-
-    retirados = db.Column(
-        db.JSON,
-        nullable=False,
-        default=list
-    )
-
-    adicionais = db.Column(
-        db.JSON,
-        nullable=False,
-        default=list
-    )
-
-    valor_adicionais = db.Column(
-        db.Numeric(10, 2),
-        nullable=False,
-        default=0
-    )
-
-    molho = db.Column(
-        db.String(100),
-        nullable=False,
-        default=""
-    )
-
-    preparo_suco = db.Column(
-        db.String(50),
-        nullable=False,
-        default=""
-    )
-
-    acucar_suco = db.Column(
-        db.String(50),
-        nullable=False,
-        default=""
-    )
-
-    observacao = db.Column(
-        db.String(300),
-        nullable=False,
-        default=""
-    )
-
-    subtotal = db.Column(
-        db.Numeric(10, 2),
-        nullable=False,
-        default=0
-    )
 
 
 # ============================================================
@@ -440,6 +449,9 @@ def pedido_para_dict(
 ):
 
     return {
+
+        "empresa_id":
+            pedido.empresa_id,
 
         "numero":
             pedido.id,
@@ -1178,15 +1190,170 @@ def montar_item_seguro(
 
 
 # ============================================================
+# REGRAS DE TRANSICAO DE STATUS
+# ============================================================
+
+def validar_transicao_status(
+    pedido,
+    novo_status
+):
+    """
+    Controla o fluxo operacional pelo backend.
+    O frontend pode solicitar a mudanca, mas o servidor decide
+    se a transicao e permitida.
+    """
+
+    status_atual = pedido.status
+
+    transicoes_permitidas = {
+        "NOVO": {
+            "EM PREPARO"
+        },
+        "EM PREPARO": {
+            "PRONTO"
+        },
+        "PRONTO PARA RETIRADA": {
+            "FINALIZADO"
+        },
+        "PRONTO PARA ENTREGA": {
+            "SAIU PARA ENTREGA"
+        },
+        "SAIU PARA ENTREGA": {
+            "FINALIZADO"
+        },
+        "FINALIZADO": set()
+    }
+
+    if novo_status == status_atual:
+        return True, None
+
+    permitidos = transicoes_permitidas.get(
+        status_atual,
+        set()
+    )
+
+    if novo_status not in permitidos:
+        return (
+            False,
+            f"Transicao invalida: {status_atual} -> {novo_status}."
+        )
+
+    if (
+        novo_status == "SAIU PARA ENTREGA"
+        and pedido.tipo != "entrega"
+    ):
+        return (
+            False,
+            "Pedido de retirada nao pode sair para entrega."
+        )
+
+    return True, None
+
+
+# ============================================================
+# LOGIN E LOGOUT DO PAINEL
+# ============================================================
+
+@app.route(
+    "/login",
+    methods=["GET", "POST"]
+)
+def login():
+
+    if painel_autenticado():
+        return redirect(
+            url_for(
+                "painel"
+            )
+        )
+
+    senha_configurada = senha_painel_configurada()
+
+    if not senha_configurada:
+
+        return render_template_string(
+            LOGIN_HTML,
+            erro=(
+                "Senha do painel ainda nao foi configurada "
+                "no arquivo .env."
+            )
+        ), 503
+
+    erro = None
+
+    if request.method == "POST":
+
+        senha_recebida = str(
+            request.form.get(
+                "senha",
+                ""
+            )
+        )
+
+        if hmac.compare_digest(
+            senha_recebida,
+            senha_configurada
+        ):
+
+            session.clear()
+
+            session[
+                "painel_autenticado"
+            ] = True
+
+            session.permanent = True
+
+            return redirect(
+                url_for(
+                    "painel"
+                )
+            )
+
+        erro = (
+            "Senha incorreta."
+        )
+
+    return render_template_string(
+        LOGIN_HTML,
+        erro=erro
+    )
+
+
+@app.route(
+    "/logout",
+    methods=["POST"]
+)
+@login_painel_obrigatorio
+def logout():
+
+    session.clear()
+
+    return jsonify({
+        "sucesso": True,
+        "mensagem":
+            "Sessao encerrada."
+    })
+
+
+# ============================================================
 # PAGINA INICIAL
 # ============================================================
 
 @app.route("/")
 def inicio():
 
+    empresa = buscar_empresa_padrao()
+
+    if empresa is None:
+        return (
+            "Empresa padrao nao configurada.",
+            503
+        )
+
     return render_template(
         "index.html",
-        produtos=produtos
+        produtos=produtos,
+        empresa=empresa
     )
 
 
@@ -1195,10 +1362,20 @@ def inicio():
 # ============================================================
 
 @app.route("/painel")
+@login_painel_obrigatorio
 def painel():
 
+    empresa = buscar_empresa_padrao()
+
+    if empresa is None:
+        return (
+            "Empresa padrao nao configurada.",
+            503
+        )
+
     return render_template(
-        "painel.html"
+        "painel.html",
+        empresa=empresa
     )
 
 
@@ -1227,6 +1404,17 @@ def criar_pedido():
             "mensagem":
                 "Nenhum dado recebido."
         }), 400
+
+
+    empresa = buscar_empresa_padrao()
+
+    if empresa is None:
+
+        return jsonify({
+            "sucesso": False,
+            "mensagem":
+                "Empresa nao configurada."
+        }), 503
 
 
     cliente = texto_seguro(
@@ -1381,6 +1569,9 @@ def criar_pedido():
 
         novo_pedido = Pedido(
 
+            empresa_id=
+                empresa.id,
+
             cliente=
                 cliente,
 
@@ -1492,220 +1683,11 @@ def criar_pedido():
         }), 500
 
 
-    pedido_dict = pedido_para_dict(
-        novo_pedido
-    )
-
-
-    print(
-        "\n"
-    )
-
-
-    print(
-        "=" * 55
-    )
-
-
-    print(
-        "PEDIDO #",
-        pedido_dict[
-            "numero_formatado"
-        ]
-    )
-
-
-    print(
-        "CLIENTE:",
-        pedido_dict[
-            "cliente"
-        ]
-    )
-
-
-    print(
-        "TIPO:",
-        pedido_dict[
-            "tipo"
-        ]
-    )
-
-
-    if pedido_dict[
-        "endereco"
-    ]:
-
-        print(
-            "ENDERECO:",
-            pedido_dict[
-                "endereco"
-            ]
-        )
-
-
-    print(
-        "PAGAMENTO:",
-        pedido_dict[
-            "pagamento"
-        ]
-    )
-
-
-    print(
-        "TOTAL CALCULADO PELO SERVIDOR: R$",
-        f'{pedido_dict["total"]:.2f}'
-    )
-
-
-    print(
-        "-" * 55
-    )
-
-
-    for item in pedido_dict[
-        "itens"
-    ]:
-
-        print(
-            item.get(
-                "quantidade",
-                1
-            ),
-            "x",
-            item.get(
-                "nome",
-                ""
-            )
-        )
-
-
-        molho = item.get(
-            "molho",
-            ""
-        )
-
-
-        if molho:
-
-            print(
-                "  Molho:",
-                molho
-            )
-
-
-        retirados = item.get(
-            "retirados",
-            []
-        )
-
-
-        if retirados:
-
-            print(
-                "  Retirar:",
-                ", ".join(
-                    retirados
-                )
-            )
-
-
-        adicionais = item.get(
-            "adicionais",
-            []
-        )
-
-
-        if adicionais:
-
-            print(
-                "  Adicionais:"
-            )
-
-
-            for adicional in adicionais:
-
-                print(
-                    "   +",
-                    adicional.get(
-                        "nome",
-                        ""
-                    ),
-                    "R$",
-                    f'{adicional.get("preco", 0):.2f}'
-                )
-
-
-        preparo_suco = item.get(
-            "preparoSuco",
-            ""
-        )
-
-
-        if preparo_suco:
-
-            print(
-                " ",
-                preparo_suco
-            )
-
-
-        acucar_suco = item.get(
-            "acucarSuco",
-            ""
-        )
-
-
-        if acucar_suco:
-
-            print(
-                " ",
-                acucar_suco
-            )
-
-
-        observacao = item.get(
-            "observacao",
-            ""
-        )
-
-
-        if observacao:
-
-            print(
-                "  OBS:",
-                observacao
-            )
-
-
-        print(
-            "  Subtotal: R$",
-            f'{item.get("subtotal", 0):.2f}'
-        )
-
-
-    print(
-        "-" * 55
-    )
-
-
-    print(
-        "STATUS:",
-        pedido_dict[
-            "status"
-        ]
-    )
-
-
-    print(
-        "HORARIO:",
-        pedido_dict[
-            "data_hora"
-        ]
-    )
-
-
-    print(
-        "=" * 55
+    app.logger.info(
+        "Pedido criado com sucesso. pedido_id=%s empresa_id=%s total=%.2f",
+        novo_pedido.id,
+        novo_pedido.empresa_id,
+        total_calculado
     )
 
 
@@ -1740,9 +1722,23 @@ def criar_pedido():
     "/pedidos",
     methods=["GET"]
 )
+@login_painel_obrigatorio
 def listar_pedidos():
 
-    pedidos_banco = Pedido.query.order_by(
+    empresa = buscar_empresa_padrao()
+
+    if empresa is None:
+
+        return jsonify({
+            "sucesso": False,
+            "mensagem":
+                "Empresa nao configurada."
+        }), 503
+
+
+    pedidos_banco = Pedido.query.filter_by(
+        empresa_id=empresa.id
+    ).order_by(
         Pedido.id.asc()
     ).all()
 
@@ -1765,6 +1761,7 @@ def listar_pedidos():
     "/pedidos/<int:numero>/status",
     methods=["PUT"]
 )
+@login_painel_obrigatorio
 def alterar_status(
     numero
 ):
@@ -1795,7 +1792,6 @@ def alterar_status(
 
 
     status_permitidos = [
-        "NOVO",
         "EM PREPARO",
         "PRONTO",
         "SAIU PARA ENTREGA",
@@ -1815,10 +1811,21 @@ def alterar_status(
         }), 400
 
 
-    pedido = db.session.get(
-        Pedido,
-        numero
-    )
+    empresa = buscar_empresa_padrao()
+
+    if empresa is None:
+
+        return jsonify({
+            "sucesso": False,
+            "mensagem":
+                "Empresa nao configurada."
+        }), 503
+
+
+    pedido = Pedido.query.filter_by(
+        id=numero,
+        empresa_id=empresa.id
+    ).first()
 
 
     if pedido is None:
@@ -1828,6 +1835,21 @@ def alterar_status(
             "mensagem":
                 "Pedido nao encontrado."
         }), 404
+
+
+    transicao_valida, erro_transicao = validar_transicao_status(
+        pedido,
+        novo_status
+    )
+
+
+    if not transicao_valida:
+
+        return jsonify({
+            "sucesso": False,
+            "mensagem":
+                erro_transicao
+        }), 400
 
 
     agora = datetime.now()
@@ -1878,30 +1900,6 @@ def alterar_status(
         == "SAIU PARA ENTREGA"
     ):
 
-        if (
-            pedido.tipo
-            != "entrega"
-        ):
-
-            return jsonify({
-                "sucesso": False,
-                "mensagem":
-                    "Pedido de retirada nao pode sair para entrega."
-            }), 400
-
-
-        if (
-            pedido.status
-            != "PRONTO PARA ENTREGA"
-        ):
-
-            return jsonify({
-                "sucesso": False,
-                "mensagem":
-                    "O pedido precisa estar pronto antes de sair para entrega."
-            }), 400
-
-
         pedido.status = (
             "SAIU PARA ENTREGA"
         )
@@ -1922,16 +1920,6 @@ def alterar_status(
 
         pedido.hora_finalizado = (
             agora
-        )
-
-
-    elif (
-        novo_status
-        == "NOVO"
-    ):
-
-        pedido.status = (
-            "NOVO"
         )
 
 
@@ -1986,6 +1974,15 @@ if __name__ == "__main__":
     )
 
 
+    if not senha_painel_configurada():
+        print(
+            "ATENCAO: PAINEL_PASSWORD nao configurada no .env."
+        )
+
+
     app.run(
-        debug=True
+        debug=app.config.get(
+            "DEBUG",
+            False
+        )
     )
