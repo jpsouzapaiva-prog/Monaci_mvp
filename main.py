@@ -1380,6 +1380,28 @@ def painel():
 
 
 # ============================================================
+# HISTORICO DE PEDIDOS
+# ============================================================
+
+@app.route("/historico")
+@login_painel_obrigatorio
+def historico():
+
+    empresa = buscar_empresa_padrao()
+
+    if empresa is None:
+        return (
+            "Empresa padrao nao configurada.",
+            503
+        )
+
+    return render_template(
+        "historico.html",
+        empresa=empresa
+    )
+
+
+# ============================================================
 # CRIAR PEDIDO
 # ============================================================
 
@@ -1754,6 +1776,46 @@ def listar_pedidos():
 
 
 # ============================================================
+# LISTAR PEDIDOS FINALIZADOS
+# ============================================================
+
+@app.route(
+    "/pedidos/finalizados",
+    methods=["GET"]
+)
+@login_painel_obrigatorio
+def listar_pedidos_finalizados():
+
+    empresa = buscar_empresa_padrao()
+
+    if empresa is None:
+
+        return jsonify({
+            "sucesso": False,
+            "mensagem":
+                "Empresa nao configurada."
+        }), 503
+
+
+    pedidos_banco = Pedido.query.filter_by(
+        empresa_id=empresa.id,
+        status="FINALIZADO"
+    ).order_by(
+        Pedido.id.desc()
+    ).all()
+
+
+    return jsonify([
+
+        pedido_para_dict(
+            pedido
+        )
+
+        for pedido in pedidos_banco
+    ])
+
+
+# ============================================================
 # ALTERAR STATUS
 # ============================================================
 
@@ -1986,3 +2048,4 @@ if __name__ == "__main__":
             False
         )
     )
+

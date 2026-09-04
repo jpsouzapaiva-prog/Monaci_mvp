@@ -47,16 +47,35 @@
             align-items: center;
             gap: 10px;
             margin-bottom: 20px;
+            flex-wrap: wrap;
         }
 
-        .atualizar {
-            background-color: #c62828;
-            color: white;
+        .acoes-topo {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .botao-topo {
             border: none;
             padding: 12px 18px;
             border-radius: 8px;
             cursor: pointer;
             font-weight: bold;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .atualizar {
+            background-color: #c62828;
+            color: white;
+        }
+
+        .historico {
+            background-color: #333;
+            color: white;
         }
 
         .colunas {
@@ -270,7 +289,11 @@
                 align-items: stretch;
             }
 
-            .atualizar {
+            .acoes-topo {
+                flex-direction: column;
+            }
+
+            .botao-topo {
                 width: 100%;
             }
         }
@@ -290,12 +313,23 @@
 
         <h2>Pedidos ativos</h2>
 
-        <button
-            class="atualizar"
-            onclick="carregarPedidos()"
-        >
-            Atualizar pedidos
-        </button>
+        <div class="acoes-topo">
+
+            <a
+                href="/historico"
+                class="botao-topo historico"
+            >
+                📋 Histórico
+            </a>
+
+            <button
+                class="botao-topo atualizar"
+                onclick="carregarPedidos()"
+            >
+                Atualizar pedidos
+            </button>
+
+        </div>
 
     </div>
 
@@ -579,23 +613,69 @@
 
 
             if (
-                item.semMilho
+                Array.isArray(item.retirados) &&
+                item.retirados.length > 0
             ) {
 
                 itensHTML +=
                     '<div class="detalhe">' +
-                    "↳ Sem milho" +
+                    "↳ Retirar: " +
+                    item.retirados
+                        .map(
+                            ingrediente =>
+                                escaparHtml(
+                                    ingrediente
+                                )
+                        )
+                        .join(", ") +
                     "</div>";
             }
 
 
             if (
-                item.semAzeitona
+                Array.isArray(item.adicionais) &&
+                item.adicionais.length > 0
             ) {
 
                 itensHTML +=
                     '<div class="detalhe">' +
-                    "↳ Sem azeitona" +
+                    "↳ Adicionais: " +
+                    item.adicionais
+                        .map(
+                            adicional =>
+                                escaparHtml(
+                                    adicional.nome
+                                )
+                        )
+                        .join(", ") +
+                    "</div>";
+            }
+
+
+            if (
+                item.preparoSuco
+            ) {
+
+                itensHTML +=
+                    '<div class="detalhe">' +
+                    "↳ Preparo: " +
+                    escaparHtml(
+                        item.preparoSuco
+                    ) +
+                    "</div>";
+            }
+
+
+            if (
+                item.acucarSuco
+            ) {
+
+                itensHTML +=
+                    '<div class="detalhe">' +
+                    "↳ Açúcar: " +
+                    escaparHtml(
+                        item.acucarSuco
+                    ) +
                     "</div>";
             }
 

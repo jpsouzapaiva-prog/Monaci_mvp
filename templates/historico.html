@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Histórico de Pedidos - Família Monaci</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            background-color: #f2f2f2;
+            font-family: Arial, sans-serif;
+            color: #222;
+        }
+
+        header {
+            background-color: #c62828;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        header h1 {
+            margin: 0;
+        }
+
+        header p {
+            margin: 6px 0 0;
+            color: #ffd600;
+            font-weight: bold;
+        }
+
+        main {
+            max-width: 1400px;
+            margin: auto;
+            padding: 20px;
+        }
+
+        .topo {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .acoes-topo {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .botao {
+            border: none;
+            padding: 12px 18px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .botao-voltar {
+            background-color: #333;
+            color: white;
+        }
+
+        .botao-atualizar {
+            background-color: #c62828;
+            color: white;
+        }
+
+        .resumo {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(220px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .card-resumo {
+            background-color: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .card-resumo span {
+            display: block;
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+
+        .card-resumo strong {
+            font-size: 28px;
+        }
+
+        .filtros {
+            background-color: white;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        }
+
+        .filtros-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 12px;
+        }
+
+        .campo {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .campo label {
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .campo input {
+            padding: 11px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            font-size: 15px;
+        }
+
+        .lista {
+            display: grid;
+            gap: 15px;
+        }
+
+        .pedido {
+            background-color: white;
+            border-radius: 12px;
+            padding: 18px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            border-left: 7px solid #2e7d32;
+        }
+
+        .pedido-topo {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+        }
+
+        .numero {
+            font-size: 22px;
+            font-weight: bold;
+        }
+
+        .status {
+            background-color: #2e7d32;
+            color: white;
+            padding: 7px 10px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: bold;
+        }
+
+        .dados {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(220px, 1fr));
+            gap: 10px 20px;
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+
+        .itens {
+            background-color: #fafafa;
+            border-radius: 10px;
+            padding: 12px;
+            margin-top: 10px;
+        }
+
+        .item {
+            padding: 10px 0;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .item:last-child {
+            border-bottom: none;
+        }
+
+        .item-nome {
+            font-weight: bold;
+        }
+
+        .detalhe {
+            margin-left: 12px;
+            margin-top: 4px;
+            font-size: 14px;
+        }
+
+        .horarios {
+            margin-top: 12px;
+            padding: 10px;
+            background-color: #f7f7f7;
+            border-radius: 8px;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .vazio {
+            background-color: white;
+            padding: 30px;
+            border-radius: 12px;
+            text-align: center;
+            color: #666;
+        }
+
+        .erro {
+            background-color: #fff0f0;
+            color: #9b1c1c;
+            border: 1px solid #efb4b4;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        @media (max-width: 800px) {
+            .resumo,
+            .dados,
+            .filtros-grid {
+                grid-template-columns: 1fr;
+            }
+
+            main {
+                padding: 10px;
+            }
+
+            .topo {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .acoes-topo {
+                flex-direction: column;
+            }
+
+            .botao {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<header>
+    <h1>Família Monaci</h1>
+    <p>Histórico de Pedidos</p>
+</header>
+
+<main>
+
+    <div class="topo">
+
+        <h2>Pedidos finalizados</h2>
+
+        <div class="acoes-topo">
+
+            <a
+                href="/painel"
+                class="botao botao-voltar"
+            >
+                ← Voltar ao painel
+            </a>
+
+            <button
+                class="botao botao-atualizar"
+                onclick="carregarHistorico()"
+            >
+                Atualizar histórico
+            </button>
+
+        </div>
+
+    </div>
+
+    <section class="resumo">
+
+        <div class="card-resumo">
+            <span>Pedidos finalizados</span>
+            <strong id="totalPedidos">0</strong>
+        </div>
+
+        <div class="card-resumo">
+            <span>Total vendido</span>
+            <strong id="totalVendido">R$ 0,00</strong>
+        </div>
+
+    </section>
+
+    <section class="filtros">
+
+        <div class="filtros-grid">
+
+            <div class="campo">
+                <label for="busca">Buscar</label>
+                <input
+                    id="busca"
+                    type="text"
+                    placeholder="Cliente ou número do pedido"
+                    oninput="aplicarFiltros()"
+                >
+            </div>
+
+            <div class="campo">
+                <label for="dataFiltro">Data</label>
+                <input
+                    id="dataFiltro"
+                    type="date"
+                    onchange="aplicarFiltros()"
+                >
+            </div>
+
+        </div>
+
+    </section>
+
+    <section
+        class="lista"
+        id="listaHistorico"
+    >
+        <div class="vazio">
+            Carregando histórico...
+        </div>
+    </section>
+
+</main>
+
+<script>
+
+    let pedidosFinalizados = [];
+
+
+    function escaparHtml(texto) {
+
+        const div =
+            document.createElement("div");
+
+        div.innerText =
+            texto || "";
+
+        return div.innerHTML;
+    }
+
+
+    function formatarMoeda(valor) {
+
+        return Number(
+            valor || 0
+        ).toLocaleString(
+            "pt-BR",
+            {
+                style: "currency",
+                currency: "BRL"
+            }
+        );
+    }
+
+
+    async function carregarHistorico() {
+
+        const lista =
+            document.getElementById(
+                "listaHistorico"
+            );
+
+
+        lista.innerHTML =
+            '<div class="vazio">Carregando histórico...</div>';
+
+
+        try {
+
+            const resposta =
+                await fetch(
+                    "/pedidos"
+                );
+
+
+            if (
+                !resposta.ok
+            ) {
+
+                throw new Error(
+                    "Erro ao consultar pedidos."
+                );
+            }
+
+
+            const pedidos =
+                await resposta.json();
+
+
+            pedidosFinalizados =
+                pedidos.filter(
+                    pedido =>
+                        pedido.status ===
+                        "FINALIZADO"
+                );
+
+
+            aplicarFiltros();
+
+
+        } catch (erro) {
+
+            console.error(
+                erro
+            );
+
+
+            lista.innerHTML =
+                '<div class="erro">' +
+                "Não foi possível carregar o histórico." +
+                "</div>";
+        }
+    }
+
+
+    function aplicarFiltros() {
+
+        const busca =
+            document.getElementById(
+                "busca"
+            ).value
+                .trim()
+                .toLowerCase();
+
+
+        const dataFiltro =
+            document.getElementById(
+                "dataFiltro"
+            ).value;
+
+
+        let pedidosFiltrados =
+            [...pedidosFinalizados];
+
+
+        if (
+            busca
+        ) {
+
+            pedidosFiltrados =
+                pedidosFiltrados.filter(
+                    pedido => {
+
+                        const cliente =
+                            String(
+                                pedido.cliente || ""
+                            ).toLowerCase();
+
+
+                        const numero =
+                            String(
+                                pedido.numero || ""
+                            );
+
+
+                        const numeroFormatado =
+                            String(
+                                pedido.numero_formatado || ""
+                            );
+
+
+                        return (
+                            cliente.includes(
+                                busca
+                            ) ||
+                            numero.includes(
+                                busca
+                            ) ||
+                            numeroFormatado.includes(
+                                busca
+                            )
+                        );
+                    }
+                );
+        }
+
+
+        if (
+            dataFiltro
+        ) {
+
+            const partes =
+                dataFiltro.split(
+                    "-"
+                );
+
+
+            const dataBrasil =
+                partes[2] +
+                "/" +
+                partes[1] +
+                "/" +
+                partes[0];
+
+
+            pedidosFiltrados =
+                pedidosFiltrados.filter(
+                    pedido =>
+                        String(
+                            pedido.data_hora || ""
+                        ).startsWith(
+                            dataBrasil
+                        )
+                );
+        }
+
+
+        atualizarResumo(
+            pedidosFiltrados
+        );
+
+
+        renderizarPedidos(
+            pedidosFiltrados
+        );
+    }
+
+
+    function atualizarResumo(
+        pedidos
+    ) {
+
+        const quantidade =
+            pedidos.length;
+
+
+        const total =
+            pedidos.reduce(
+                (
+                    acumulado,
+                    pedido
+                ) =>
+                    acumulado +
+                    Number(
+                        pedido.total || 0
+                    ),
+                0
+            );
+
+
+        document.getElementById(
+            "totalPedidos"
+        ).innerText =
+            quantidade;
+
+
+        document.getElementById(
+            "totalVendido"
+        ).innerText =
+            formatarMoeda(
+                total
+            );
+    }
+
+
+    function renderizarPedidos(
+        pedidos
+    ) {
+
+        const lista =
+            document.getElementById(
+                "listaHistorico"
+            );
+
+
+        if (
+            pedidos.length === 0
+        ) {
+
+            lista.innerHTML =
+                '<div class="vazio">' +
+                "Nenhum pedido finalizado encontrado." +
+                "</div>";
+
+            return;
+        }
+
+
+        const ordenados =
+            [...pedidos].sort(
+                (
+                    a,
+                    b
+                ) =>
+                    Number(
+                        b.numero
+                    ) -
+                    Number(
+                        a.numero
+                    )
+            );
+
+
+        let html = "";
+
+
+        for (
+            const pedido of ordenados
+        ) {
+
+            html +=
+                criarPedidoHTML(
+                    pedido
+                );
+        }
+
+
+        lista.innerHTML =
+            html;
+    }
+
+
+    function criarPedidoHTML(
+        pedido
+    ) {
+
+        let itensHTML = "";
+
+
+        for (
+            const item of pedido.itens || []
+        ) {
+
+            itensHTML +=
+                '<div class="item">';
+
+
+            itensHTML +=
+                '<div class="item-nome">' +
+                (item.quantidade || 1) +
+                "x " +
+                escaparHtml(
+                    item.nome
+                ) +
+                "</div>";
+
+
+            if (
+                item.molho
+            ) {
+
+                itensHTML +=
+                    '<div class="detalhe">' +
+                    "↳ Molho: " +
+                    escaparHtml(
+                        item.molho
+                    ) +
+                    "</div>";
+            }
+
+
+            if (
+                Array.isArray(
+                    item.retirados
+                ) &&
+                item.retirados.length > 0
+            ) {
+
+                itensHTML +=
+                    '<div class="detalhe">' +
+                    "↳ Retirar: " +
+                    item.retirados
+                        .map(
+                            ingrediente =>
+                                escaparHtml(
+                                    ingrediente
+                                )
+                        )
+                        .join(", ") +
+                    "</div>";
+            }
+
+
+            if (
+                Array.isArray(
+                    item.adicionais
+                ) &&
+                item.adicionais.length > 0
+            ) {
+
+                itensHTML +=
+                    '<div class="detalhe">' +
+                    "↳ Adicionais: " +
+                    item.adicionais
+                        .map(
+                            adicional =>
+                                escaparHtml(
+                                    adicional.nome
+                                )
+                        )
+                        .join(", ") +
+                    "</div>";
+            }
+
+
+            if (
+                item.observacao
+            ) {
+
+                itensHTML +=
+                    '<div class="detalhe">' +
+                    "↳ OBS: " +
+                    escaparHtml(
+                        item.observacao
+                    ) +
+                    "</div>";
+            }
+
+
+            itensHTML +=
+                "</div>";
+        }
+
+
+        let enderecoHTML = "";
+
+
+        if (
+            pedido.endereco
+        ) {
+
+            enderecoHTML =
+                "<div>" +
+                "<strong>Endereço:</strong> " +
+                escaparHtml(
+                    pedido.endereco
+                ) +
+                "</div>";
+        }
+
+
+        let horariosHTML =
+            '<div class="horarios">' +
+            "<strong>Recebido:</strong> " +
+            escaparHtml(
+                pedido.data_hora
+            );
+
+
+        if (
+            pedido.hora_inicio_preparo
+        ) {
+
+            horariosHTML +=
+                "<br><strong>Início do preparo:</strong> " +
+                escaparHtml(
+                    pedido.hora_inicio_preparo
+                );
+        }
+
+
+        if (
+            pedido.hora_pronto
+        ) {
+
+            horariosHTML +=
+                "<br><strong>Pronto:</strong> " +
+                escaparHtml(
+                    pedido.hora_pronto
+                );
+        }
+
+
+        if (
+            pedido.hora_saida_entrega
+        ) {
+
+            horariosHTML +=
+                "<br><strong>Saiu para entrega:</strong> " +
+                escaparHtml(
+                    pedido.hora_saida_entrega
+                );
+        }
+
+
+        if (
+            pedido.hora_finalizado
+        ) {
+
+            horariosHTML +=
+                "<br><strong>Finalizado:</strong> " +
+                escaparHtml(
+                    pedido.hora_finalizado
+                );
+        }
+
+
+        horariosHTML +=
+            "</div>";
+
+
+        return `
+            <article class="pedido">
+
+                <div class="pedido-topo">
+
+                    <div class="numero">
+                        Pedido #${String(
+                            pedido.numero
+                        ).padStart(
+                            4,
+                            "0"
+                        )}
+                    </div>
+
+                    <div class="status">
+                        FINALIZADO
+                    </div>
+
+                </div>
+
+                <div class="dados">
+
+                    <div>
+                        <strong>Cliente:</strong>
+                        ${escaparHtml(
+                            pedido.cliente
+                        )}
+                    </div>
+
+                    <div>
+                        <strong>Tipo:</strong>
+                        ${
+                            pedido.tipo ===
+                            "entrega"
+                                ? "Entrega"
+                                : "Retirada"
+                        }
+                    </div>
+
+                    ${enderecoHTML}
+
+                    <div>
+                        <strong>Pagamento:</strong>
+                        ${escaparHtml(
+                            pedido.pagamento
+                        )}
+                    </div>
+
+                    <div>
+                        <strong>Total:</strong>
+                        ${formatarMoeda(
+                            pedido.total
+                        )}
+                    </div>
+
+                </div>
+
+                <h3>Itens do pedido</h3>
+
+                <div class="itens">
+                    ${itensHTML}
+                </div>
+
+                ${horariosHTML}
+
+            </article>
+        `;
+    }
+
+
+    carregarHistorico();
+
+</script>
+
+</body>
+
+</html>
