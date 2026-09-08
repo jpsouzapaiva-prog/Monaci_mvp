@@ -16,7 +16,7 @@ from functools import wraps
 
 from cardapio import cardapio
 from config import obter_configuracao
-from models import db, Empresa, Pedido, ItemPedido
+from models import db, Empresa, BairroEntrega, Pedido, ItemPedido
 
 
 # ============================================================
@@ -1417,6 +1417,40 @@ def painel():
     return render_template(
         "painel.html",
         empresa=empresa
+    )
+
+
+# ============================================================
+# CONFIGURACAO DE BAIRROS DE ENTREGA
+# ============================================================
+
+@app.route("/configuracoes/entregas")
+@login_painel_obrigatorio
+def configuracoes_entregas():
+
+    empresa = buscar_empresa_padrao()
+
+    if empresa is None:
+        return (
+            "Empresa padrao nao configurada.",
+            503
+        )
+
+    bairros = (
+        BairroEntrega.query
+        .filter_by(
+            empresa_id=empresa.id
+        )
+        .order_by(
+            BairroEntrega.nome.asc()
+        )
+        .all()
+    )
+
+    return render_template(
+        "bairros_entrega.html",
+        empresa=empresa,
+        bairros=bairros
     )
 
 

@@ -49,6 +49,69 @@ class Empresa(db.Model):
 
 
 # ============================================================
+# BAIRRO DE ENTREGA
+# ============================================================
+
+class BairroEntrega(db.Model):
+
+    __tablename__ = "bairros_entrega"
+
+    id = db.Column(
+        db.Integer,
+        primary_key=True
+    )
+
+    empresa_id = db.Column(
+        db.Integer,
+        db.ForeignKey(
+            "empresas.id"
+        ),
+        nullable=False,
+        index=True
+    )
+
+    nome = db.Column(
+        db.String(120),
+        nullable=False
+    )
+
+    taxa = db.Column(
+        db.Numeric(10, 2),
+        nullable=False,
+        default=0
+    )
+
+    ativo = db.Column(
+        db.Boolean,
+        nullable=False,
+        default=True
+    )
+
+    criado_em = db.Column(
+        db.DateTime,
+        nullable=False,
+        default=datetime.now
+    )
+
+    empresa = db.relationship(
+        "Empresa",
+        backref=db.backref(
+            "bairros_entrega",
+            lazy=True,
+            cascade="all, delete-orphan"
+        )
+    )
+
+    __table_args__ = (
+        db.UniqueConstraint(
+            "empresa_id",
+            "nome",
+            name="uq_bairro_entrega_empresa_nome"
+        ),
+    )
+
+
+# ============================================================
 # PEDIDO
 # ============================================================
 
@@ -84,6 +147,20 @@ class Pedido(db.Model):
         db.String(500),
         nullable=False,
         default=""
+    )
+
+    bairro_entrega = db.Column(
+        db.String(120),
+        nullable=False,
+        default="",
+        server_default=""
+    )
+
+    taxa_entrega = db.Column(
+        db.Numeric(10, 2),
+        nullable=False,
+        default=0,
+        server_default="0"
     )
 
     pagamento = db.Column(
@@ -253,4 +330,3 @@ class ItemPedido(db.Model):
         nullable=False,
         default=0
     )
-

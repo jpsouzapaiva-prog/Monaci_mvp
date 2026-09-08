@@ -1,0 +1,307 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Bairros de entrega - Monaci</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f5f5f5;
+            color: #222;
+        }
+
+        .topo {
+            background: linear-gradient(
+                135deg,
+                #8b0000,
+                #c40000
+            );
+            color: white;
+            padding: 24px 20px;
+        }
+
+        .topo-conteudo {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .topo h1 {
+            margin: 0 0 6px;
+            font-size: 28px;
+        }
+
+        .topo p {
+            margin: 0;
+            opacity: .9;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 24px 20px 40px;
+        }
+
+        .acoes-topo {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .botao-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            border: 0;
+            border-radius: 10px;
+            padding: 11px 16px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .botao-voltar {
+            background: #222;
+            color: white;
+        }
+
+        .botao-novo {
+            background: #b40000;
+            color: white;
+        }
+
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 22px;
+            box-shadow: 0 8px 25px rgba(0,0,0,.08);
+        }
+
+        .card h2 {
+            margin-top: 0;
+            margin-bottom: 8px;
+        }
+
+        .descricao {
+            color: #666;
+            margin-top: 0;
+            margin-bottom: 22px;
+        }
+
+        .tabela-responsiva {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 600px;
+        }
+
+        th,
+        td {
+            text-align: left;
+            padding: 14px 12px;
+            border-bottom: 1px solid #e7e7e7;
+        }
+
+        th {
+            color: #555;
+            font-size: 14px;
+            background: #fafafa;
+        }
+
+        .taxa {
+            font-weight: 700;
+        }
+
+        .status {
+            display: inline-block;
+            border-radius: 999px;
+            padding: 6px 10px;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .status-ativo {
+            background: #e7f7ed;
+            color: #16733a;
+        }
+
+        .status-inativo {
+            background: #f2f2f2;
+            color: #666;
+        }
+
+        .vazio {
+            padding: 34px 10px;
+            text-align: center;
+            color: #666;
+        }
+
+        .vazio strong {
+            display: block;
+            color: #222;
+            font-size: 18px;
+            margin-bottom: 8px;
+        }
+
+        @media (max-width: 650px) {
+            .topo {
+                padding: 20px 16px;
+            }
+
+            .topo h1 {
+                font-size: 24px;
+            }
+
+            .container {
+                padding: 18px 14px 30px;
+            }
+
+            .card {
+                padding: 18px 14px;
+            }
+
+            .acoes-topo {
+                flex-direction: column;
+            }
+
+            .botao-link {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <header class="topo">
+        <div class="topo-conteudo">
+            <h1>Bairros de entrega</h1>
+            <p>
+                {{ empresa.nome }}
+            </p>
+        </div>
+    </header>
+
+    <main class="container">
+
+        <div class="acoes-topo">
+
+            <a
+                href="{{ url_for('painel') }}"
+                class="botao-link botao-voltar"
+            >
+                Voltar ao painel
+            </a>
+
+            <button
+                type="button"
+                class="botao-link botao-novo"
+                disabled
+                title="Cadastro será ativado na próxima etapa"
+            >
+                + Adicionar bairro
+            </button>
+
+        </div>
+
+        <section class="card">
+
+            <h2>Áreas atendidas</h2>
+
+            <p class="descricao">
+                Aqui ficam os bairros atendidos pela empresa
+                e a taxa de entrega de cada região.
+            </p>
+
+            {% if bairros %}
+
+                <div class="tabela-responsiva">
+
+                    <table>
+
+                        <thead>
+                            <tr>
+                                <th>Bairro</th>
+                                <th>Taxa</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+
+                            {% for bairro in bairros %}
+
+                                <tr>
+
+                                    <td>
+                                        {{ bairro.nome }}
+                                    </td>
+
+                                    <td class="taxa">
+                                        R$ {{
+                                            "%.2f"|format(
+                                                bairro.taxa
+                                            )
+                                        }}
+                                    </td>
+
+                                    <td>
+
+                                        {% if bairro.ativo %}
+
+                                            <span class="status status-ativo">
+                                                Ativo
+                                            </span>
+
+                                        {% else %}
+
+                                            <span class="status status-inativo">
+                                                Inativo
+                                            </span>
+
+                                        {% endif %}
+
+                                    </td>
+
+                                </tr>
+
+                            {% endfor %}
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            {% else %}
+
+                <div class="vazio">
+
+                    <strong>
+                        Nenhum bairro cadastrado ainda.
+                    </strong>
+
+                    O proprietário poderá cadastrar
+                    os bairros atendidos e definir
+                    a taxa de cada região.
+
+                </div>
+
+            {% endif %}
+
+        </section>
+
+    </main>
+
+</body>
+</html>
