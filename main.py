@@ -1,4 +1,13 @@
-from flask import Flask, render_template, request, jsonify, session, redirect, url_for, render_template_string
+from flask import (
+    Flask,
+    render_template,
+    request,
+    jsonify,
+    session,
+    redirect,
+    url_for,
+    render_template_string
+)
 from flask_migrate import Migrate
 from datetime import datetime
 import os
@@ -63,6 +72,7 @@ LOGIN_HTML = """
     <title>Monaci - Acesso ao painel</title>
     <style>
         * { box-sizing: border-box; }
+
         body {
             margin: 0;
             min-height: 100vh;
@@ -73,6 +83,7 @@ LOGIN_HTML = """
             background: #f5f5f5;
             padding: 20px;
         }
+
         .box {
             width: 100%;
             max-width: 390px;
@@ -81,9 +92,23 @@ LOGIN_HTML = """
             padding: 28px;
             box-shadow: 0 12px 35px rgba(0,0,0,.10);
         }
-        h1 { margin: 0 0 8px; font-size: 26px; }
-        p { margin: 0 0 22px; color: #666; }
-        label { display: block; margin-bottom: 8px; font-weight: 700; }
+
+        h1 {
+            margin: 0 0 8px;
+            font-size: 26px;
+        }
+
+        p {
+            margin: 0 0 22px;
+            color: #666;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 700;
+        }
+
         input {
             width: 100%;
             padding: 13px 14px;
@@ -91,6 +116,7 @@ LOGIN_HTML = """
             border-radius: 10px;
             font-size: 16px;
         }
+
         button {
             width: 100%;
             margin-top: 16px;
@@ -101,6 +127,7 @@ LOGIN_HTML = """
             font-weight: 700;
             cursor: pointer;
         }
+
         .erro {
             background: #fff0f0;
             border: 1px solid #efb4b4;
@@ -121,6 +148,7 @@ LOGIN_HTML = """
 
         <form method="post">
             <label for="senha">Senha</label>
+
             <input
                 id="senha"
                 name="senha"
@@ -129,7 +157,10 @@ LOGIN_HTML = """
                 required
                 autofocus
             >
-            <button type="submit">Entrar</button>
+
+            <button type="submit">
+                Entrar
+            </button>
         </form>
     </div>
 </body>
@@ -237,10 +268,98 @@ def buscar_empresa_padrao():
     O navegador nao escolhe empresa_id: o backend resolve a empresa
     pelo slug configurado no servidor.
     """
+
     return Empresa.query.filter_by(
         slug=EMPRESA_PADRAO_SLUG,
         ativa=True
     ).first()
+
+
+# ============================================================
+# INICIALIZACAO DA EMPRESA PADRAO
+# ============================================================
+
+@app.cli.command("seed")
+def seed():
+    """
+    Cria os dados iniciais necessarios para uma instalacao
+    nova do Monaci.
+
+    O comando e idempotente:
+    pode ser executado novamente sem duplicar a empresa.
+    """
+
+    empresa = Empresa.query.filter_by(
+        slug=EMPRESA_PADRAO_SLUG
+    ).first()
+
+    if empresa is not None:
+
+        alterado = False
+
+        if empresa.nome != "Familia Monaci":
+            empresa.nome = "Familia Monaci"
+            alterado = True
+
+        if empresa.ativa is not True:
+            empresa.ativa = True
+            alterado = True
+
+        if alterado:
+
+            try:
+
+                db.session.commit()
+
+            except Exception:
+
+                db.session.rollback()
+
+                app.logger.exception(
+                    "Erro ao atualizar empresa padrao."
+                )
+
+                raise
+
+            print(
+                "Empresa Familia Monaci atualizada com sucesso."
+            )
+
+        else:
+
+            print(
+                "Empresa Familia Monaci ja esta configurada."
+            )
+
+        return
+
+    empresa = Empresa(
+        nome="Familia Monaci",
+        slug=EMPRESA_PADRAO_SLUG,
+        ativa=True
+    )
+
+    try:
+
+        db.session.add(
+            empresa
+        )
+
+        db.session.commit()
+
+    except Exception:
+
+        db.session.rollback()
+
+        app.logger.exception(
+            "Erro ao criar empresa padrao."
+        )
+
+        raise
+
+    print(
+        "Empresa Familia Monaci criada com sucesso."
+    )
 
 
 # ============================================================
@@ -261,7 +380,9 @@ for categoria in categorias_produtos:
 
         produto_copia = produto.copy()
 
-        produto_copia["categoria"] = categoria
+        produto_copia["categoria"] = (
+            categoria
+        )
 
         produtos.append(
             produto_copia
@@ -364,16 +485,13 @@ def validar_quantidade(
 
         return None
 
-
     if quantidade < 1:
 
         return None
 
-
     if quantidade > 50:
 
         return None
-
 
     return quantidade
 
@@ -414,11 +532,9 @@ def normalizar_texto(
         "ç": "c"
     }
 
-
     resultado = str(
         texto or ""
     ).lower().strip()
-
 
     for origem, destino in substituicoes.items():
 
@@ -426,7 +542,6 @@ def normalizar_texto(
             origem,
             destino
         )
-
 
     return resultado
 
@@ -586,11 +701,9 @@ def ingredientes_retiraveis(
         []
     )
 
-
     categoria = produto.get(
         "categoria"
     )
-
 
     if not isinstance(
         ingredientes,
@@ -598,7 +711,6 @@ def ingredientes_retiraveis(
     ):
 
         return []
-
 
     if categoria == "hot_dog":
 
@@ -608,83 +720,62 @@ def ingredientes_retiraveis(
             "azeitona"
         ]
 
-
         return [
-
             ingrediente
-
             for ingrediente
             in ingredientes
-
             if normalizar_texto(
                 ingrediente
             )
             in permitidos
         ]
 
-
     if categoria == "sanduiches":
 
         ingredientes_estruturais = [
-
             "pao bola",
             "pao de caixa",
             "pao de forma",
-
             "carne de hamburguer",
             "1 carne de hamburguer",
             "2 carnes de hamburguer",
-
             "carne",
             "2 carnes"
         ]
 
-
         return [
-
             ingrediente
-
             for ingrediente
             in ingredientes
-
             if normalizar_texto(
                 ingrediente
             )
             not in ingredientes_estruturais
         ]
 
-
     if categoria == "pizza_brotinho":
 
         return [
-
             ingrediente
-
             for ingrediente
             in ingredientes
-
             if normalizar_texto(
                 ingrediente
             )
             == "ovo de codorna"
         ]
 
-
     if categoria == "acai":
 
         return [
-
             ingrediente
-
             for ingrediente
             in ingredientes
-
             if normalizar_texto(
                 ingrediente
             )
             != "acai"
         ]
-
 
     return []
 
@@ -705,14 +796,11 @@ def validar_retirados(
 
         return []
 
-
     permitidos = ingredientes_retiraveis(
         produto
     )
 
-
     permitidos_normalizados = {
-
         normalizar_texto(
             ingrediente
         ): ingrediente
@@ -721,16 +809,13 @@ def validar_retirados(
         in permitidos
     }
 
-
     retirados_validos = []
-
 
     for ingrediente in retirados_recebidos:
 
         nome_normalizado = normalizar_texto(
             ingrediente
         )
-
 
         if (
             nome_normalizado
@@ -743,7 +828,6 @@ def validar_retirados(
                 ]
             )
 
-
             if (
                 ingrediente_oficial
                 not in retirados_validos
@@ -752,7 +836,6 @@ def validar_retirados(
                 retirados_validos.append(
                     ingrediente_oficial
                 )
-
 
     return retirados_validos
 
@@ -770,7 +853,6 @@ def validar_adicionais(
 
     valor_adicionais = 0.0
 
-
     if not isinstance(
         adicionais_recebidos,
         list
@@ -782,17 +864,13 @@ def validar_adicionais(
             "Formato dos adicionais invalido."
         )
 
-
     categoria = produto.get(
         "categoria"
     )
 
-
     nomes_processados = set()
 
-
     for adicional_recebido in adicionais_recebidos:
-
 
         if isinstance(
             adicional_recebido,
@@ -813,7 +891,6 @@ def validar_adicionais(
                 100
             )
 
-
         if not nome:
 
             return (
@@ -822,14 +899,11 @@ def validar_adicionais(
                 "Adicional invalido."
             )
 
-
         if nome in nomes_processados:
 
             continue
 
-
         preco_oficial = None
-
 
         if categoria == "hot_dog":
 
@@ -837,7 +911,6 @@ def validar_adicionais(
                 "adicionais",
                 {}
             )
-
 
             if (
                 isinstance(
@@ -854,7 +927,6 @@ def validar_adicionais(
                     ]
                 )
 
-
         elif categoria == "sanduiches":
 
             if (
@@ -868,7 +940,6 @@ def validar_adicionais(
                     ]
                 )
 
-
         if preco_oficial is None:
 
             return (
@@ -877,9 +948,7 @@ def validar_adicionais(
                 "Adicional invalido."
             )
 
-
         adicionais_validos.append({
-
             "nome":
                 nome,
 
@@ -890,19 +959,15 @@ def validar_adicionais(
                 )
         })
 
-
         valor_adicionais += (
             preco_oficial
         )
-
 
         nomes_processados.add(
             nome
         )
 
-
     return (
-
         adicionais_validos,
 
         round(
@@ -932,7 +997,6 @@ def montar_item_seguro(
             "Item invalido."
         )
 
-
     produto_id = texto_seguro(
         item_recebido.get(
             "id"
@@ -940,11 +1004,9 @@ def montar_item_seguro(
         100
     )
 
-
     produto = buscar_produto(
         produto_id
     )
-
 
     if not produto:
 
@@ -953,13 +1015,11 @@ def montar_item_seguro(
             "Produto nao encontrado."
         )
 
-
     quantidade = validar_quantidade(
         item_recebido.get(
             "quantidade"
         )
     )
-
 
     if quantidade is None:
 
@@ -967,7 +1027,6 @@ def montar_item_seguro(
             None,
             "Quantidade invalida."
         )
-
 
     retirados = validar_retirados(
         produto,
@@ -977,21 +1036,17 @@ def montar_item_seguro(
         )
     )
 
-
     (
         adicionais,
         valor_adicionais,
         erro_adicional
     ) = validar_adicionais(
-
         produto,
-
         item_recebido.get(
             "adicionais",
             []
         )
     )
-
 
     if erro_adicional:
 
@@ -1000,15 +1055,12 @@ def montar_item_seguro(
             erro_adicional
         )
 
-
     categoria = produto.get(
         "categoria",
         ""
     )
 
-
     molho = ""
-
 
     if categoria == "hot_dog":
 
@@ -1018,7 +1070,6 @@ def montar_item_seguro(
             ),
             50
         )
-
 
         if (
             molho_recebido
@@ -1033,9 +1084,7 @@ def montar_item_seguro(
                 "Todos os molhos"
             )
 
-
     preparo_suco = ""
-
 
     if categoria == "sucos":
 
@@ -1045,7 +1094,6 @@ def montar_item_seguro(
             ),
             30
         )
-
 
         if (
             preparo_recebido
@@ -1062,9 +1110,7 @@ def montar_item_seguro(
                 "Sem leite"
             )
 
-
     acucar_suco = ""
-
 
     if categoria == "sucos":
 
@@ -1074,7 +1120,6 @@ def montar_item_seguro(
             ),
             30
         )
-
 
         if (
             acucar_recebido
@@ -1091,14 +1136,12 @@ def montar_item_seguro(
                 "Com açúcar"
             )
 
-
     observacao = texto_seguro(
         item_recebido.get(
             "observacao"
         ),
         300
     )
-
 
     preco_produto = float(
         produto.get(
@@ -1107,18 +1150,15 @@ def montar_item_seguro(
         )
     )
 
-
     preco_unitario = (
         preco_produto
         + valor_adicionais
     )
 
-
     subtotal = (
         preco_unitario
         * quantidade
     )
-
 
     item_seguro = {
 
@@ -1181,7 +1221,6 @@ def montar_item_seguro(
                 2
             )
     }
-
 
     return (
         item_seguro,
@@ -1267,7 +1306,9 @@ def login():
             )
         )
 
-    senha_configurada = senha_painel_configurada()
+    senha_configurada = (
+        senha_painel_configurada()
+    )
 
     if not senha_configurada:
 
@@ -1415,7 +1456,6 @@ def criar_pedido():
         silent=True
     )
 
-
     if not isinstance(
         dados,
         dict
@@ -1427,7 +1467,6 @@ def criar_pedido():
                 "Nenhum dado recebido."
         }), 400
 
-
     empresa = buscar_empresa_padrao()
 
     if empresa is None:
@@ -1438,14 +1477,12 @@ def criar_pedido():
                 "Empresa nao configurada."
         }), 503
 
-
     cliente = texto_seguro(
         dados.get(
             "cliente"
         ),
         100
     )
-
 
     if cliente == "":
 
@@ -1455,7 +1492,6 @@ def criar_pedido():
                 "Nome do cliente nao informado."
         }), 400
 
-
     tipo_pedido = texto_seguro(
         dados.get(
             "tipo",
@@ -1463,7 +1499,6 @@ def criar_pedido():
         ),
         20
     )
-
 
     if tipo_pedido not in [
         "retirada",
@@ -1476,14 +1511,12 @@ def criar_pedido():
                 "Tipo de pedido invalido."
         }), 400
 
-
     endereco = texto_seguro(
         dados.get(
             "endereco"
         ),
         500
     )
-
 
     if (
         tipo_pedido == "entrega"
@@ -1496,7 +1529,6 @@ def criar_pedido():
                 "Endereco de entrega nao informado."
         }), 400
 
-
     pagamento = texto_seguro(
         dados.get(
             "pagamento"
@@ -1504,12 +1536,10 @@ def criar_pedido():
         200
     )
 
-
     itens_recebidos = dados.get(
         "itens",
         []
     )
-
 
     if not isinstance(
         itens_recebidos,
@@ -1522,7 +1552,6 @@ def criar_pedido():
                 "Formato dos itens invalido."
         }), 400
 
-
     if len(
         itens_recebidos
     ) == 0:
@@ -1532,7 +1561,6 @@ def criar_pedido():
             "mensagem":
                 "Pedido sem produtos."
         }), 400
-
 
     if len(
         itens_recebidos
@@ -1544,11 +1572,9 @@ def criar_pedido():
                 "Quantidade de itens acima do permitido."
         }), 400
 
-
     itens_seguros = []
 
     total_calculado = 0.0
-
 
     for item_recebido in itens_recebidos:
 
@@ -1559,7 +1585,6 @@ def criar_pedido():
             item_recebido
         )
 
-
         if erro:
 
             return jsonify({
@@ -1568,11 +1593,9 @@ def criar_pedido():
                     erro
             }), 400
 
-
         itens_seguros.append(
             item_seguro
         )
-
 
         total_calculado += (
             item_seguro[
@@ -1580,12 +1603,10 @@ def criar_pedido():
             ]
         )
 
-
     total_calculado = round(
         total_calculado,
         2
     )
-
 
     try:
 
@@ -1616,14 +1637,11 @@ def criar_pedido():
                 datetime.now()
         )
 
-
         db.session.add(
             novo_pedido
         )
 
-
         db.session.flush()
-
 
         for item in itens_seguros:
 
@@ -1681,14 +1699,11 @@ def criar_pedido():
                     item["subtotal"]
             )
 
-
             db.session.add(
                 novo_item
             )
 
-
         db.session.commit()
-
 
     except Exception:
 
@@ -1704,14 +1719,12 @@ def criar_pedido():
                 "Nao foi possivel salvar o pedido."
         }), 500
 
-
     app.logger.info(
         "Pedido criado com sucesso. pedido_id=%s empresa_id=%s total=%.2f",
         novo_pedido.id,
         novo_pedido.empresa_id,
         total_calculado
     )
-
 
     return jsonify({
 
@@ -1757,20 +1770,16 @@ def listar_pedidos():
                 "Empresa nao configurada."
         }), 503
 
-
     pedidos_banco = Pedido.query.filter_by(
         empresa_id=empresa.id
     ).order_by(
         Pedido.id.asc()
     ).all()
 
-
     return jsonify([
-
         pedido_para_dict(
             pedido
         )
-
         for pedido in pedidos_banco
     ])
 
@@ -1796,7 +1805,6 @@ def listar_pedidos_finalizados():
                 "Empresa nao configurada."
         }), 503
 
-
     pedidos_banco = Pedido.query.filter_by(
         empresa_id=empresa.id,
         status="FINALIZADO"
@@ -1804,13 +1812,10 @@ def listar_pedidos_finalizados():
         Pedido.id.desc()
     ).all()
 
-
     return jsonify([
-
         pedido_para_dict(
             pedido
         )
-
         for pedido in pedidos_banco
     ])
 
@@ -1832,7 +1837,6 @@ def alterar_status(
         silent=True
     )
 
-
     if not isinstance(
         dados,
         dict
@@ -1844,7 +1848,6 @@ def alterar_status(
                 "Dados invalidos."
         }), 400
 
-
     novo_status = texto_seguro(
         dados.get(
             "status"
@@ -1852,14 +1855,12 @@ def alterar_status(
         50
     )
 
-
     status_permitidos = [
         "EM PREPARO",
         "PRONTO",
         "SAIU PARA ENTREGA",
         "FINALIZADO"
     ]
-
 
     if (
         novo_status
@@ -1872,7 +1873,6 @@ def alterar_status(
                 "Status invalido."
         }), 400
 
-
     empresa = buscar_empresa_padrao()
 
     if empresa is None:
@@ -1883,12 +1883,10 @@ def alterar_status(
                 "Empresa nao configurada."
         }), 503
 
-
     pedido = Pedido.query.filter_by(
         id=numero,
         empresa_id=empresa.id
     ).first()
-
 
     if pedido is None:
 
@@ -1898,12 +1896,13 @@ def alterar_status(
                 "Pedido nao encontrado."
         }), 404
 
-
-    transicao_valida, erro_transicao = validar_transicao_status(
+    (
+        transicao_valida,
+        erro_transicao
+    ) = validar_transicao_status(
         pedido,
         novo_status
     )
-
 
     if not transicao_valida:
 
@@ -1913,9 +1912,7 @@ def alterar_status(
                 erro_transicao
         }), 400
 
-
     agora = datetime.now()
-
 
     if (
         novo_status
@@ -1929,7 +1926,6 @@ def alterar_status(
         pedido.hora_inicio_preparo = (
             agora
         )
-
 
     elif (
         novo_status
@@ -1951,11 +1947,9 @@ def alterar_status(
                 "PRONTO PARA ENTREGA"
             )
 
-
         pedido.hora_pronto = (
             agora
         )
-
 
     elif (
         novo_status
@@ -1970,7 +1964,6 @@ def alterar_status(
             agora
         )
 
-
     elif (
         novo_status
         == "FINALIZADO"
@@ -1983,7 +1976,6 @@ def alterar_status(
         pedido.hora_finalizado = (
             agora
         )
-
 
     try:
 
@@ -2002,7 +1994,6 @@ def alterar_status(
             "mensagem":
                 "Nao foi possivel atualizar o status."
         }), 500
-
 
     return jsonify({
 
@@ -2027,7 +2018,6 @@ if __name__ == "__main__":
         "=== MONACI 1.0 ==="
     )
 
-
     print(
         "Produtos carregados:",
         len(
@@ -2035,12 +2025,11 @@ if __name__ == "__main__":
         )
     )
 
-
     if not senha_painel_configurada():
+
         print(
             "ATENCAO: PAINEL_PASSWORD nao configurada no .env."
         )
-
 
     app.run(
         debug=app.config.get(
@@ -2048,4 +2037,3 @@ if __name__ == "__main__":
             False
         )
     )
-
