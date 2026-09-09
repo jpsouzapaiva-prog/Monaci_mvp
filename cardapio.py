@@ -1,3 +1,4 @@
+
 cardapio = {
 
     # =========================================================
@@ -667,134 +668,34 @@ cardapio = {
     "sucos": [
 
         {
-            "id": "suco_acerola",
-            "nome": "Suco de Acerola",
+            "id": "suco_500ml",
+            "nome": "Suco 500ml",
             "preco": 11.00,
             "tamanho": "500ml",
             "setor": "sucos",
-            "opcoes_preparo": [
-                "Sem leite",
-                "Com leite"
-            ]
-        },
 
-        {
-            "id": "suco_ameixa",
-            "nome": "Suco de Ameixa",
-            "preco": 11.00,
-            "tamanho": "500ml",
-            "setor": "sucos",
-            "opcoes_preparo": [
-                "Sem leite",
-                "Com leite"
-            ]
-        },
+            "sabores": [
+                "Acerola",
+                "Ameixa",
+                "Abacaxi",
+                "Caju",
+                "Mangaba",
+                "Uva",
+                "Graviola",
+                "Goiaba",
+                "Cupuacu",
+                "Maracuja",
+                "Caja"
+            ],
 
-        {
-            "id": "suco_abacaxi",
-            "nome": "Suco de Abacaxi",
-            "preco": 11.00,
-            "tamanho": "500ml",
-            "setor": "sucos",
             "opcoes_preparo": [
                 "Sem leite",
                 "Com leite"
-            ]
-        },
+            ],
 
-        {
-            "id": "suco_caju",
-            "nome": "Suco de Caju",
-            "preco": 11.00,
-            "tamanho": "500ml",
-            "setor": "sucos",
-            "opcoes_preparo": [
-                "Sem leite",
-                "Com leite"
-            ]
-        },
-
-        {
-            "id": "suco_mangaba",
-            "nome": "Suco de Mangaba",
-            "preco": 11.00,
-            "tamanho": "500ml",
-            "setor": "sucos",
-            "opcoes_preparo": [
-                "Sem leite",
-                "Com leite"
-            ]
-        },
-
-        {
-            "id": "suco_uva",
-            "nome": "Suco de Uva",
-            "preco": 11.00,
-            "tamanho": "500ml",
-            "setor": "sucos",
-            "opcoes_preparo": [
-                "Sem leite",
-                "Com leite"
-            ]
-        },
-
-        {
-            "id": "suco_graviola",
-            "nome": "Suco de Graviola",
-            "preco": 11.00,
-            "tamanho": "500ml",
-            "setor": "sucos",
-            "opcoes_preparo": [
-                "Sem leite",
-                "Com leite"
-            ]
-        },
-
-        {
-            "id": "suco_goiaba",
-            "nome": "Suco de Goiaba",
-            "preco": 11.00,
-            "tamanho": "500ml",
-            "setor": "sucos",
-            "opcoes_preparo": [
-                "Sem leite",
-                "Com leite"
-            ]
-        },
-
-        {
-            "id": "suco_cupuacu",
-            "nome": "Suco de Cupuacu",
-            "preco": 11.00,
-            "tamanho": "500ml",
-            "setor": "sucos",
-            "opcoes_preparo": [
-                "Sem leite",
-                "Com leite"
-            ]
-        },
-
-        {
-            "id": "suco_maracuja",
-            "nome": "Suco de Maracuja",
-            "preco": 11.00,
-            "tamanho": "500ml",
-            "setor": "sucos",
-            "opcoes_preparo": [
-                "Sem leite",
-                "Com leite"
-            ]
-        },
-
-        {
-            "id": "suco_caja",
-            "nome": "Suco de Caja",
-            "preco": 11.00,
-            "tamanho": "500ml",
-            "setor": "sucos",
-            "opcoes_preparo": [
-                "Sem leite",
-                "Com leite"
+            "opcoes_acucar": [
+                "Com açúcar",
+                "Sem açúcar"
             ]
         }
 
@@ -865,3 +766,4 @@ if __name__ == "__main__":
         total_produtos,
         "produtos cadastrados"
     )
+

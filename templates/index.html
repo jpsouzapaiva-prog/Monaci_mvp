@@ -1115,7 +1115,9 @@
         if (Array.isArray(produto.ingredientes) && produto.ingredientes.length > 0) {
             descricao = produto.ingredientes.join(", ");
         } else if (produto.tamanho) {
-            descricao = produto.tamanho;
+            descricao = produto.categoria === "sucos"
+                ? produto.tamanho + " • Escolha o sabor e o preparo"
+                : produto.tamanho;
         }
 
         card.innerHTML = `
@@ -1127,8 +1129,14 @@
                 </div>
             </div>
 
-            <details class="personalizacao-details" id="detalhes${indice}">
-                <summary>Personalizar pedido</summary>
+            <details
+                class="personalizacao-details"
+                id="detalhes${indice}"
+                ${produto.categoria === "sucos" ? "open" : ""}
+            >
+                <summary>
+                    ${produto.categoria === "sucos" ? "Escolha sabor e preparo" : "Personalizar pedido"}
+                </summary>
                 <div class="personalizacao" id="personalizacao${indice}">
                     ${montarPersonalizacao(produto, indice)}
                 </div>
@@ -1262,8 +1270,23 @@
         }
 
         if (produto.categoria === "sucos") {
+            const sabores = Array.isArray(produto.sabores)
+                ? produto.sabores
+                : [];
+
             html += `
-                <h4>Preparo do suco</h4>
+                <h4>Sabor</h4>
+                <select id="saborSuco${indice}" class="campo-grande">
+                    <option value="">Escolha o sabor</option>
+                    ${sabores
+                        .map(
+                            sabor =>
+                                `<option value="${escaparHtml(sabor)}">${escaparHtml(sabor)}</option>`
+                        )
+                        .join("")}
+                </select>
+
+                <h4>Preparo</h4>
                 <select id="preparoSuco${indice}" class="campo-grande">
                     <option value="Sem leite">Sem leite</option>
                     <option value="Com leite">Com leite</option>
@@ -1387,6 +1410,24 @@
             molho = campoMolho ? campoMolho.value : "";
         }
 
+        let saborSuco = "";
+        if (produto.categoria === "sucos") {
+            const campoSabor = document.getElementById("saborSuco" + indice);
+            saborSuco = campoSabor ? campoSabor.value : "";
+
+            if (!saborSuco) {
+                const feedback = document.getElementById("feedback" + indice);
+                feedback.className = "feedback erro";
+                feedback.innerText = "Escolha o sabor do suco.";
+
+                const detalhes = document.getElementById("detalhes" + indice);
+                if (detalhes) detalhes.open = true;
+
+                if (campoSabor) campoSabor.focus();
+                return;
+            }
+        }
+
         let preparoSuco = "";
         if (produto.categoria === "sucos") {
             preparoSuco = document.getElementById("preparoSuco" + indice).value;
@@ -1411,6 +1452,7 @@
             retirados,
             adicionais,
             molho,
+            saborSuco,
             preparoSuco,
             acucarSuco,
             observacao,
@@ -1419,7 +1461,9 @@
 
         carrinho.push(item);
 
-        document.getElementById("feedback" + indice).innerText =
+        const feedback = document.getElementById("feedback" + indice);
+        feedback.className = "feedback";
+        feedback.innerText =
             quantidade + (quantidade === 1 ? " item adicionado." : " itens adicionados.");
 
         limparPersonalizacao(indice);
@@ -1437,6 +1481,9 @@
         const molho = document.getElementById("molho" + indice);
         if (molho) molho.value = "Todos os molhos";
 
+        const saborSuco = document.getElementById("saborSuco" + indice);
+        if (saborSuco) saborSuco.value = "";
+
         const preparoSuco = document.getElementById("preparoSuco" + indice);
         if (preparoSuco) preparoSuco.value = "Sem leite";
 
@@ -1447,7 +1494,9 @@
         if (observacao) observacao.value = "";
 
         const detalhes = document.getElementById("detalhes" + indice);
-        if (detalhes) detalhes.open = false;
+        if (detalhes) {
+            detalhes.open = produtos[indice].categoria === "sucos";
+        }
 
         quantidadesSelecionadas[indice] = 0;
         atualizarQuantidadeTela(indice);
@@ -1489,8 +1538,12 @@
                 html += `<span class="detalhe">↳ Molho: ${escaparHtml(item.molho)}</span>`;
             }
 
+            if (item.saborSuco) {
+                html += `<span class="detalhe">↳ Sabor: ${escaparHtml(item.saborSuco)}</span>`;
+            }
+
             if (item.preparoSuco) {
-                html += `<span class="detalhe">↳ ${escaparHtml(item.preparoSuco)}</span>`;
+                html += `<span class="detalhe">↳ Preparo: ${escaparHtml(item.preparoSuco)}</span>`;
             }
 
             if (item.acucarSuco) {
@@ -1708,6 +1761,7 @@
             molho: item.molho,
             retirados: item.retirados,
             adicionais: item.adicionais,
+            saborSuco: item.saborSuco,
             preparoSuco: item.preparoSuco,
             acucarSuco: item.acucarSuco,
             observacao: item.observacao

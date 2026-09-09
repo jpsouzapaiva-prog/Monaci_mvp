@@ -4,112 +4,233 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#8f1515">
 
     <title>Histórico de Pedidos - Família Monaci</title>
 
     <style>
-        * {
-            box-sizing: border-box;
+        * { box-sizing: border-box; }
+
+        :root {
+            --vermelho: #c62828;
+            --vermelho-escuro: #8f1515;
+            --vermelho-profundo: #6f1010;
+            --amarelo: #ffd600;
+            --fundo: #f5f2ed;
+            --branco: #ffffff;
+            --texto: #242424;
+            --texto-suave: #6e6e6e;
+            --borda: #e8e1da;
+            --verde: #2e7d32;
+            --verde-claro: #eaf6ec;
+            --sombra: 0 10px 28px rgba(0, 0, 0, .07);
         }
 
         body {
             margin: 0;
-            background-color: #f2f2f2;
-            font-family: Arial, sans-serif;
-            color: #222;
+            min-height: 100vh;
+            background:
+                radial-gradient(circle at 92% 0%, rgba(198,40,40,.05), transparent 22%),
+                linear-gradient(180deg, #faf8f5 0%, var(--fundo) 100%);
+            color: var(--texto);
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        button, input, a {
+            font: inherit;
+            -webkit-tap-highlight-color: transparent;
         }
 
         header {
-            background-color: #c62828;
             color: white;
+            background:
+                radial-gradient(circle at 88% 0%, rgba(255,214,0,.18), transparent 28%),
+                linear-gradient(135deg, var(--vermelho-profundo), #a91818 52%, #cf2b2b);
             padding: 20px;
-            text-align: center;
+            box-shadow: 0 10px 30px rgba(111,16,16,.22);
         }
 
-        header h1 {
+        .cabecalho-interno {
+            width: 100%;
+            max-width: 1400px;
+            margin: auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 18px;
+            flex-wrap: wrap;
+        }
+
+        .marca {
+            display: flex;
+            align-items: center;
+            gap: 13px;
+        }
+
+        .logo {
+            width: 66px;
+            height: 66px;
+            flex: 0 0 66px;
+            padding: 4px;
+            overflow: hidden;
+            border-radius: 16px;
+            background: white;
+            box-shadow: 0 7px 20px rgba(0,0,0,.18);
+        }
+
+        .logo img {
+            width: 100%;
+            height: 100%;
+            display: block;
+            object-fit: contain;
+            border-radius: 12px;
+        }
+
+        .marca small {
+            display: block;
+            margin-bottom: 4px;
+            color: rgba(255,255,255,.74);
+            font-size: 10px;
+            font-weight: 900;
+            letter-spacing: 1.1px;
+            text-transform: uppercase;
+        }
+
+        .marca h1 {
             margin: 0;
+            color: var(--amarelo);
+            font-size: 28px;
+            line-height: 1;
+            letter-spacing: -.6px;
         }
 
-        header p {
+        .marca p {
             margin: 6px 0 0;
-            color: #ffd600;
-            font-weight: bold;
+            color: rgba(255,255,255,.9);
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .cabecalho-tag {
+            padding: 9px 12px;
+            border: 1px solid rgba(255,255,255,.18);
+            border-radius: 999px;
+            background: rgba(255,255,255,.10);
+            font-size: 12px;
+            font-weight: 800;
         }
 
         main {
+            width: 100%;
             max-width: 1400px;
             margin: auto;
-            padding: 20px;
+            padding: 24px 18px 40px;
         }
 
         .topo {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            gap: 12px;
+            gap: 14px;
             flex-wrap: wrap;
             margin-bottom: 20px;
         }
 
+        .titulo span {
+            display: block;
+            margin-bottom: 4px;
+            color: var(--vermelho);
+            font-size: 11px;
+            font-weight: 900;
+            letter-spacing: .8px;
+            text-transform: uppercase;
+        }
+
+        .titulo h2 {
+            margin: 0;
+            font-size: 27px;
+            letter-spacing: -.6px;
+        }
+
+        .titulo p {
+            margin: 6px 0 0;
+            color: var(--texto-suave);
+            font-size: 13px;
+        }
+
         .acoes-topo {
             display: flex;
-            gap: 10px;
+            gap: 9px;
             flex-wrap: wrap;
         }
 
         .botao {
-            border: none;
-            padding: 12px 18px;
-            border-radius: 8px;
+            min-height: 42px;
+            border: 0;
+            padding: 0 15px;
+            border-radius: 11px;
             cursor: pointer;
-            font-weight: bold;
+            font-weight: 800;
             text-decoration: none;
             display: inline-flex;
             align-items: center;
             justify-content: center;
+            gap: 6px;
+            transition: transform .15s ease, opacity .15s ease;
         }
 
+        .botao:hover { opacity: .92; }
+        .botao:active { transform: scale(.98); }
+
         .botao-voltar {
-            background-color: #333;
+            background: #2d2d2d;
             color: white;
         }
 
         .botao-atualizar {
-            background-color: #c62828;
+            background: linear-gradient(135deg, var(--vermelho), var(--vermelho-escuro));
             color: white;
         }
 
         .resumo {
             display: grid;
             grid-template-columns: repeat(2, minmax(220px, 1fr));
-            gap: 15px;
-            margin-bottom: 20px;
+            gap: 14px;
+            margin-bottom: 18px;
         }
 
         .card-resumo {
-            background-color: white;
-            border-radius: 12px;
-            padding: 20px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            padding: 18px;
+            border: 1px solid var(--borda);
+            border-radius: 17px;
+            background: white;
+            box-shadow: var(--sombra);
         }
 
         .card-resumo span {
             display: block;
-            color: #666;
-            font-size: 14px;
             margin-bottom: 8px;
+            color: var(--texto-suave);
+            font-size: 12px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: .4px;
         }
 
         .card-resumo strong {
             font-size: 28px;
+            letter-spacing: -.6px;
         }
 
+        .card-resumo.total strong { color: var(--verde); }
+
         .filtros {
-            background-color: white;
-            border-radius: 12px;
-            padding: 15px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+            margin-bottom: 18px;
+            padding: 16px;
+            border: 1px solid var(--borda);
+            border-radius: 17px;
+            background: white;
+            box-shadow: 0 5px 18px rgba(0,0,0,.04);
         }
 
         .filtros-grid {
@@ -125,28 +246,40 @@
         }
 
         .campo label {
-            font-weight: bold;
-            font-size: 14px;
+            color: #444;
+            font-size: 12px;
+            font-weight: 800;
         }
 
         .campo input {
-            padding: 11px;
-            border-radius: 8px;
-            border: 1px solid #ccc;
-            font-size: 15px;
+            width: 100%;
+            min-height: 43px;
+            padding: 10px 12px;
+            border: 1px solid #ddd6d0;
+            border-radius: 10px;
+            background: #fff;
+            outline: none;
+            color: var(--texto);
+            font-size: 14px;
+        }
+
+        .campo input:focus {
+            border-color: var(--vermelho);
+            box-shadow: 0 0 0 3px rgba(198,40,40,.08);
         }
 
         .lista {
             display: grid;
-            gap: 15px;
+            gap: 14px;
         }
 
         .pedido {
-            background-color: white;
-            border-radius: 12px;
             padding: 18px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-            border-left: 7px solid #2e7d32;
+            border: 1px solid var(--borda);
+            border-top: 5px solid var(--verde);
+            border-radius: 17px;
+            background: white;
+            box-shadow: var(--sombra);
         }
 
         .pedido-topo {
@@ -155,106 +288,135 @@
             align-items: center;
             gap: 10px;
             flex-wrap: wrap;
-            margin-bottom: 12px;
+            margin-bottom: 14px;
         }
 
         .numero {
-            font-size: 22px;
-            font-weight: bold;
+            font-size: 20px;
+            font-weight: 900;
+            letter-spacing: -.3px;
         }
 
         .status {
-            background-color: #2e7d32;
-            color: white;
-            padding: 7px 10px;
-            border-radius: 20px;
-            font-size: 13px;
-            font-weight: bold;
+            padding: 6px 10px;
+            border-radius: 999px;
+            background: var(--verde-claro);
+            color: #236b29;
+            font-size: 10px;
+            font-weight: 900;
+            text-transform: uppercase;
         }
 
         .dados {
             display: grid;
             grid-template-columns: repeat(2, minmax(220px, 1fr));
-            gap: 10px 20px;
-            margin-bottom: 15px;
-            line-height: 1.5;
-        }
-
-        .itens {
-            background-color: #fafafa;
-            border-radius: 10px;
-            padding: 12px;
-            margin-top: 10px;
-        }
-
-        .item {
-            padding: 10px 0;
-            border-bottom: 1px solid #ddd;
-        }
-
-        .item:last-child {
-            border-bottom: none;
-        }
-
-        .item-nome {
-            font-weight: bold;
-        }
-
-        .detalhe {
-            margin-left: 12px;
-            margin-top: 4px;
-            font-size: 14px;
-        }
-
-        .horarios {
-            margin-top: 12px;
-            padding: 10px;
-            background-color: #f7f7f7;
-            border-radius: 8px;
+            gap: 8px 18px;
+            margin-bottom: 14px;
+            color: #484848;
             font-size: 13px;
             line-height: 1.5;
         }
 
-        .vazio {
-            background-color: white;
-            padding: 30px;
-            border-radius: 12px;
+        .pedido h3 {
+            margin: 13px 0 8px;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: .45px;
+        }
+
+        .itens {
+            margin-top: 8px;
+            padding: 10px 12px;
+            border: 1px solid #eee7e1;
+            border-radius: 11px;
+            background: #fbfaf8;
+        }
+
+        .item {
+            padding: 9px 0;
+            border-bottom: 1px dashed #ddd5cf;
+        }
+
+        .item:last-child { border-bottom: 0; }
+
+        .item-nome {
+            font-size: 13.5px;
+            font-weight: 900;
+        }
+
+        .detalhe {
+            margin: 4px 0 0 10px;
+            color: #5c5c5c;
+            font-size: 12px;
+            line-height: 1.4;
+        }
+
+        .observacao {
+            margin-top: 6px;
+            padding: 6px 8px;
+            border-radius: 7px;
+            background: #fff3cd;
+            color: #684f00;
+            font-weight: 900;
+        }
+
+        .horarios {
+            margin-top: 11px;
+            padding: 9px 10px;
+            border-radius: 9px;
+            background: #f5f3f0;
+            color: #656565;
+            font-size: 11px;
+            line-height: 1.5;
+        }
+
+        .vazio,
+        .erro {
+            padding: 28px 18px;
+            border-radius: 14px;
             text-align: center;
-            color: #666;
+        }
+
+        .vazio {
+            border: 1px dashed #ddd4cd;
+            background: rgba(255,255,255,.78);
+            color: #777;
         }
 
         .erro {
-            background-color: #fff0f0;
-            color: #9b1c1c;
             border: 1px solid #efb4b4;
-            padding: 15px;
-            border-radius: 10px;
-            text-align: center;
+            background: #fff0f0;
+            color: #9b1c1c;
+            font-weight: 700;
         }
 
         @media (max-width: 800px) {
+            header { padding: 15px 13px; }
+            .logo { width: 56px; height: 56px; flex-basis: 56px; border-radius: 13px; }
+            .marca h1 { font-size: 23px; }
+            .marca p { font-size: 12px; }
+            .cabecalho-tag { display: none; }
+            main { padding: 17px 10px 30px; }
+
+            .topo {
+                align-items: stretch;
+                flex-direction: column;
+            }
+
+            .titulo h2 { font-size: 23px; }
+
+            .acoes-topo {
+                display: grid;
+                grid-template-columns: 1fr;
+            }
+
             .resumo,
             .dados,
             .filtros-grid {
                 grid-template-columns: 1fr;
             }
 
-            main {
-                padding: 10px;
-            }
-
-            .topo {
-                flex-direction: column;
-                align-items: stretch;
-            }
-
-            .acoes-topo {
-                flex-direction: column;
-            }
-
-            .botao {
-                width: 100%;
-            }
+            .pedido { padding: 15px; }
         }
     </style>
 </head>
@@ -262,15 +424,37 @@
 <body>
 
 <header>
-    <h1>Família Monaci</h1>
-    <p>Histórico de Pedidos</p>
+    <div class="cabecalho-interno">
+        <div class="marca">
+            <div class="logo">
+                <img
+                    src="{{ url_for('static', filename='images/logo_monaci.jpg') }}"
+                    alt="Logo Família Monaci"
+                >
+            </div>
+
+            <div>
+                <small>Operação Família Monaci</small>
+                <h1>Histórico de Pedidos</h1>
+                <p>Consulta dos pedidos finalizados</p>
+            </div>
+        </div>
+
+        <div class="cabecalho-tag">
+            📋 Registro da operação
+        </div>
+    </div>
 </header>
 
 <main>
 
     <div class="topo">
 
-        <h2>Pedidos finalizados</h2>
+        <div class="titulo">
+            <span>Histórico</span>
+            <h2>Pedidos finalizados</h2>
+            <p>Consulte pedidos, valores e detalhes de preparo.</p>
+        </div>
 
         <div class="acoes-topo">
 
@@ -282,10 +466,11 @@
             </a>
 
             <button
+                type="button"
                 class="botao botao-atualizar"
                 onclick="carregarHistorico()"
             >
-                Atualizar histórico
+                ↻ Atualizar histórico
             </button>
 
         </div>
@@ -299,7 +484,7 @@
             <strong id="totalPedidos">0</strong>
         </div>
 
-        <div class="card-resumo">
+        <div class="card-resumo total">
             <span>Total vendido</span>
             <strong id="totalVendido">R$ 0,00</strong>
         </div>
@@ -391,7 +576,7 @@
 
             const resposta =
                 await fetch(
-                    "/pedidos"
+                    "/pedidos/finalizados"
                 );
 
 
@@ -410,11 +595,11 @@
 
 
             pedidosFinalizados =
-                pedidos.filter(
-                    pedido =>
-                        pedido.status ===
-                        "FINALIZADO"
-                );
+                Array.isArray(
+                    pedidos
+                )
+                    ? pedidos
+                    : [];
 
 
             aplicarFiltros();
@@ -672,6 +857,48 @@
 
 
             if (
+                item.saborSuco
+            ) {
+
+                itensHTML +=
+                    '<div class="detalhe">' +
+                    "↳ Sabor: " +
+                    escaparHtml(
+                        item.saborSuco
+                    ) +
+                    "</div>";
+            }
+
+
+            if (
+                item.preparoSuco
+            ) {
+
+                itensHTML +=
+                    '<div class="detalhe">' +
+                    "↳ Preparo: " +
+                    escaparHtml(
+                        item.preparoSuco
+                    ) +
+                    "</div>";
+            }
+
+
+            if (
+                item.acucarSuco
+            ) {
+
+                itensHTML +=
+                    '<div class="detalhe">' +
+                    "↳ Açúcar: " +
+                    escaparHtml(
+                        item.acucarSuco
+                    ) +
+                    "</div>";
+            }
+
+
+            if (
                 Array.isArray(
                     item.retirados
                 ) &&
@@ -720,7 +947,7 @@
             ) {
 
                 itensHTML +=
-                    '<div class="detalhe">' +
+                    '<div class="detalhe observacao">' +
                     "↳ OBS: " +
                     escaparHtml(
                         item.observacao

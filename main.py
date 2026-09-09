@@ -672,6 +672,9 @@ def item_para_dict(
         "molho":
             item.molho or "",
 
+        "saborSuco":
+            item.sabor_suco or "",
+
         "preparoSuco":
             item.preparo_suco or "",
 
@@ -1084,6 +1087,58 @@ def montar_item_seguro(
                 "Todos os molhos"
             )
 
+    sabor_suco = ""
+
+    if categoria == "sucos":
+
+        sabores_produto = produto.get(
+            "sabores",
+            []
+        )
+
+        if not isinstance(
+            sabores_produto,
+            list
+        ) or len(
+            sabores_produto
+        ) == 0:
+
+            return (
+                None,
+                "Sabores do suco nao configurados."
+            )
+
+        sabor_recebido = texto_seguro(
+            item_recebido.get(
+                "saborSuco"
+            ),
+            80
+        )
+
+        sabores_por_normalizado = {
+            normalizar_texto(
+                sabor
+            ): sabor
+
+            for sabor
+            in sabores_produto
+        }
+
+        sabor_suco = (
+            sabores_por_normalizado.get(
+                normalizar_texto(
+                    sabor_recebido
+                )
+            )
+        )
+
+        if not sabor_suco:
+
+            return (
+                None,
+                "Selecione um sabor de suco valido."
+            )
+
     preparo_suco = ""
 
     if categoria == "sucos":
@@ -1205,6 +1260,9 @@ def montar_item_seguro(
 
         "molho":
             molho,
+
+        "saborSuco":
+            sabor_suco,
 
         "preparoSuco":
             preparo_suco,
@@ -1715,6 +1773,11 @@ def criar_pedido():
 
                 molho=
                     item["molho"],
+
+                sabor_suco=
+                    item[
+                        "saborSuco"
+                    ],
 
                 preparo_suco=
                     item[

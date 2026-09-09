@@ -307,6 +307,13 @@ class ItemPedido(db.Model):
         default=""
     )
 
+    sabor_suco = db.Column(
+        db.String(80),
+        nullable=False,
+        default="",
+        server_default=""
+    )
+
     preparo_suco = db.Column(
         db.String(50),
         nullable=False,
