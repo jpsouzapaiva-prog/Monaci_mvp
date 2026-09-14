@@ -587,6 +587,14 @@ def pedido_para_dict(
         "endereco":
             pedido.endereco or "",
 
+        "bairro_entrega":
+            pedido.bairro_entrega or "",
+
+        "taxa_entrega":
+            float(
+                pedido.taxa_entrega or 0
+            ),
+
         "pagamento":
             pedido.pagamento or "",
 
@@ -1449,10 +1457,23 @@ def inicio():
             503
         )
 
+    bairros_entrega = (
+        BairroEntrega.query
+        .filter_by(
+            empresa_id=empresa.id,
+            ativo=True
+        )
+        .order_by(
+            BairroEntrega.nome.asc()
+        )
+        .all()
+    )
+
     return render_template(
         "index.html",
         produtos=produtos,
-        empresa=empresa
+        empresa=empresa,
+        bairros_entrega=bairros_entrega
     )
 
 
@@ -1482,7 +1503,10 @@ def painel():
 # CONFIGURACAO DE BAIRROS DE ENTREGA
 # ============================================================
 
-@app.route("/configuracoes/entregas")
+@app.route(
+    "/configuracoes/entregas",
+    methods=["GET", "POST"]
+)
 @login_painel_obrigatorio
 def configuracoes_entregas():
 
@@ -1493,6 +1517,122 @@ def configuracoes_entregas():
             "Empresa padrao nao configurada.",
             503
         )
+
+    erro = None
+
+    if request.method == "POST":
+
+        nome = texto_seguro(
+            request.form.get(
+                "nome"
+            ),
+            120
+        )
+
+        taxa_texto = texto_seguro(
+            request.form.get(
+                "taxa"
+            ),
+            30
+        )
+
+        if nome == "":
+
+            erro = (
+                "Informe o nome do bairro."
+            )
+
+        taxa = None
+
+        if erro is None:
+
+            try:
+
+                taxa = float(
+                    taxa_texto.replace(
+                        ",",
+                        "."
+                    )
+                )
+
+                taxa = round(
+                    taxa,
+                    2
+                )
+
+            except (
+                TypeError,
+                ValueError
+            ):
+
+                erro = (
+                    "Informe uma taxa de entrega valida."
+                )
+
+        if (
+            erro is None
+            and taxa < 0
+        ):
+
+            erro = (
+                "A taxa de entrega nao pode ser negativa."
+            )
+
+        if erro is None:
+
+            bairro_existente = (
+                BairroEntrega.query
+                .filter(
+                    BairroEntrega.empresa_id
+                    == empresa.id,
+                    db.func.lower(
+                        BairroEntrega.nome
+                    )
+                    == nome.lower()
+                )
+                .first()
+            )
+
+            if bairro_existente is not None:
+
+                erro = (
+                    "Este bairro ja esta cadastrado."
+                )
+
+        if erro is None:
+
+            novo_bairro = BairroEntrega(
+                empresa_id=empresa.id,
+                nome=nome,
+                taxa=taxa,
+                ativo=True
+            )
+
+            try:
+
+                db.session.add(
+                    novo_bairro
+                )
+
+                db.session.commit()
+
+                return redirect(
+                    url_for(
+                        "configuracoes_entregas"
+                    )
+                )
+
+            except Exception:
+
+                db.session.rollback()
+
+                app.logger.exception(
+                    "Erro ao cadastrar bairro de entrega."
+                )
+
+                erro = (
+                    "Nao foi possivel cadastrar o bairro."
+                )
 
     bairros = (
         BairroEntrega.query
@@ -1508,7 +1648,161 @@ def configuracoes_entregas():
     return render_template(
         "bairros_entrega.html",
         empresa=empresa,
-        bairros=bairros
+        bairros=bairros,
+        erro=erro
+    )
+
+
+# ============================================================
+# EDITAR TAXA DE BAIRRO
+# ============================================================
+
+@app.route(
+    "/configuracoes/entregas/<int:bairro_id>/editar",
+    methods=["POST"]
+)
+@login_painel_obrigatorio
+def editar_bairro_entrega(
+    bairro_id
+):
+
+    empresa = buscar_empresa_padrao()
+
+    if empresa is None:
+        return (
+            "Empresa padrao nao configurada.",
+            503
+        )
+
+    bairro = BairroEntrega.query.filter_by(
+        id=bairro_id,
+        empresa_id=empresa.id
+    ).first()
+
+    if bairro is None:
+        return (
+            "Bairro nao encontrado.",
+            404
+        )
+
+    taxa_texto = texto_seguro(
+        request.form.get(
+            "taxa"
+        ),
+        30
+    )
+
+    try:
+
+        taxa = float(
+            taxa_texto.replace(
+                ",",
+                "."
+            )
+        )
+
+        taxa = round(
+            taxa,
+            2
+        )
+
+    except (
+        TypeError,
+        ValueError
+    ):
+
+        return (
+            "Taxa de entrega invalida.",
+            400
+        )
+
+    if taxa < 0:
+        return (
+            "A taxa de entrega nao pode ser negativa.",
+            400
+        )
+
+    bairro.taxa = taxa
+
+    try:
+
+        db.session.commit()
+
+    except Exception:
+
+        db.session.rollback()
+
+        app.logger.exception(
+            "Erro ao atualizar taxa do bairro."
+        )
+
+        return (
+            "Nao foi possivel atualizar a taxa.",
+            500
+        )
+
+    return redirect(
+        url_for(
+            "configuracoes_entregas"
+        )
+    )
+
+
+# ============================================================
+# ATIVAR / INATIVAR BAIRRO
+# ============================================================
+
+@app.route(
+    "/configuracoes/entregas/<int:bairro_id>/status",
+    methods=["POST"]
+)
+@login_painel_obrigatorio
+def alterar_status_bairro_entrega(
+    bairro_id
+):
+
+    empresa = buscar_empresa_padrao()
+
+    if empresa is None:
+        return (
+            "Empresa padrao nao configurada.",
+            503
+        )
+
+    bairro = BairroEntrega.query.filter_by(
+        id=bairro_id,
+        empresa_id=empresa.id
+    ).first()
+
+    if bairro is None:
+        return (
+            "Bairro nao encontrado.",
+            404
+        )
+
+    bairro.ativo = not bairro.ativo
+
+    try:
+
+        db.session.commit()
+
+    except Exception:
+
+        db.session.rollback()
+
+        app.logger.exception(
+            "Erro ao alterar status do bairro."
+        )
+
+        return (
+            "Nao foi possivel alterar o status do bairro.",
+            500
+        )
+
+    return redirect(
+        url_for(
+            "configuracoes_entregas"
+        )
     )
 
 
@@ -1621,6 +1915,61 @@ def criar_pedido():
                 "Endereco de entrega nao informado."
         }), 400
 
+    bairro_entrega = ""
+    taxa_entrega = 0.0
+
+    if tipo_pedido == "entrega":
+
+        bairro_id_recebido = dados.get(
+            "bairro_id"
+        )
+
+        try:
+
+            bairro_id = int(
+                bairro_id_recebido
+            )
+
+        except (
+            TypeError,
+            ValueError
+        ):
+
+            return jsonify({
+                "sucesso": False,
+                "mensagem":
+                    "Selecione um bairro de entrega valido."
+            }), 400
+
+        bairro_cadastrado = (
+            BairroEntrega.query
+            .filter_by(
+                id=bairro_id,
+                empresa_id=empresa.id,
+                ativo=True
+            )
+            .first()
+        )
+
+        if bairro_cadastrado is None:
+
+            return jsonify({
+                "sucesso": False,
+                "mensagem":
+                    "Bairro de entrega indisponivel."
+            }), 400
+
+        bairro_entrega = (
+            bairro_cadastrado.nome
+        )
+
+        taxa_entrega = round(
+            float(
+                bairro_cadastrado.taxa
+            ),
+            2
+        )
+
     pagamento = texto_seguro(
         dados.get(
             "pagamento"
@@ -1695,8 +2044,14 @@ def criar_pedido():
             ]
         )
 
-    total_calculado = round(
+    total_produtos = round(
         total_calculado,
+        2
+    )
+
+    total_calculado = round(
+        total_produtos
+        + taxa_entrega,
         2
     )
 
@@ -1715,6 +2070,12 @@ def criar_pedido():
 
             endereco=
                 endereco,
+
+            bairro_entrega=
+                bairro_entrega,
+
+            taxa_entrega=
+                taxa_entrega,
 
             pagamento=
                 pagamento,
@@ -1837,6 +2198,15 @@ def criar_pedido():
             ).zfill(
                 4
             ),
+
+        "subtotal_produtos":
+            total_produtos,
+
+        "bairro_entrega":
+            bairro_entrega,
+
+        "taxa_entrega":
+            taxa_entrega,
 
         "total":
             total_calculado,
