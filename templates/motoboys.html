@@ -1,0 +1,568 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#8f1515">
+
+    <title>Motoboys - Família Monaci</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        :root {
+            --vermelho: #c62828;
+            --vermelho-escuro: #8f1515;
+            --vermelho-profundo: #6f1010;
+            --amarelo: #ffd600;
+            --fundo: #f5f2ed;
+            --branco: #ffffff;
+            --texto: #242424;
+            --texto-suave: #6e6e6e;
+            --borda: #e8e1da;
+            --verde: #2e7d32;
+            --verde-claro: #eaf6ec;
+            --cinza-claro: #f2f2f2;
+            --sombra: 0 10px 28px rgba(0, 0, 0, .07);
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: Arial, Helvetica, sans-serif;
+            background:
+                radial-gradient(circle at 92% 0%, rgba(198, 40, 40, .05), transparent 22%),
+                linear-gradient(180deg, #faf8f5 0%, var(--fundo) 100%);
+            color: var(--texto);
+        }
+
+        button,
+        input,
+        a {
+            font: inherit;
+        }
+
+        .topo {
+            color: white;
+            background:
+                radial-gradient(circle at 88% 0%, rgba(255, 214, 0, .18), transparent 28%),
+                linear-gradient(135deg, var(--vermelho-profundo), #a91818 52%, #cf2b2b);
+            padding: 22px 18px;
+            box-shadow: 0 10px 30px rgba(111, 16, 16, .22);
+        }
+
+        .topo-conteudo {
+            max-width: 1050px;
+            margin: 0 auto;
+        }
+
+        .topo small {
+            display: block;
+            margin-bottom: 5px;
+            color: rgba(255,255,255,.72);
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .topo h1 {
+            margin: 0;
+            color: var(--amarelo);
+            font-size: 30px;
+            line-height: 1.1;
+        }
+
+        .topo p {
+            margin: 7px 0 0;
+            color: rgba(255,255,255,.9);
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1050px;
+            margin: 0 auto;
+            padding: 24px 18px 40px;
+        }
+
+        .acoes-topo {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 18px;
+        }
+
+        .botao-link,
+        .botao-salvar {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 44px;
+            border: 0;
+            border-radius: 11px;
+            padding: 11px 16px;
+            font-weight: 800;
+            text-decoration: none;
+            cursor: pointer;
+            transition: transform .15s ease, opacity .15s ease;
+        }
+
+        .botao-link:hover,
+        .botao-salvar:hover {
+            transform: translateY(-1px);
+        }
+
+        .botao-voltar {
+            background: #222;
+            color: white;
+        }
+
+        .botao-salvar {
+            width: 100%;
+            margin-top: 2px;
+            background: var(--vermelho);
+            color: white;
+        }
+
+        .grade {
+            display: grid;
+            grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
+            gap: 20px;
+            align-items: start;
+        }
+
+        .card {
+            background: var(--branco);
+            border: 1px solid rgba(0,0,0,.04);
+            border-radius: 18px;
+            padding: 22px;
+            box-shadow: var(--sombra);
+        }
+
+        .card h2 {
+            margin: 0 0 7px;
+            font-size: 21px;
+        }
+
+        .descricao {
+            margin: 0 0 20px;
+            color: var(--texto-suave);
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .erro {
+            margin-bottom: 16px;
+            padding: 12px 13px;
+            border: 1px solid #efb4b4;
+            border-radius: 11px;
+            background: #fff1f1;
+            color: #8a1d1d;
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .campo {
+            margin-bottom: 16px;
+        }
+
+        .campo label {
+            display: block;
+            margin-bottom: 7px;
+            font-size: 14px;
+            font-weight: 800;
+        }
+
+        .campo input {
+            width: 100%;
+            min-height: 46px;
+            border: 1px solid #d8d1cb;
+            border-radius: 11px;
+            padding: 11px 13px;
+            background: #fff;
+            color: var(--texto);
+            font-size: 16px;
+            outline: none;
+        }
+
+        .campo input:focus {
+            border-color: var(--vermelho);
+            box-shadow: 0 0 0 3px rgba(198, 40, 40, .10);
+        }
+
+        .ajuda {
+            display: block;
+            margin-top: 6px;
+            color: var(--texto-suave);
+            font-size: 12px;
+        }
+
+        .tabela-responsiva {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 620px;
+        }
+
+        th,
+        td {
+            padding: 14px 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--borda);
+            vertical-align: middle;
+        }
+
+        th {
+            background: #faf8f6;
+            color: #565656;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: .3px;
+        }
+
+        td {
+            font-size: 14px;
+        }
+
+        .motoboy-nome {
+            font-weight: 800;
+        }
+
+        .login {
+            font-family: Consolas, monospace;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .status {
+            display: inline-block;
+            border-radius: 999px;
+            padding: 6px 10px;
+            font-size: 12px;
+            font-weight: 800;
+        }
+
+        .status-ativo {
+            background: var(--verde-claro);
+            color: var(--verde);
+        }
+
+        .status-inativo {
+            background: var(--cinza-claro);
+            color: #666;
+        }
+
+        .botao-acao {
+            min-height: 36px;
+            border-radius: 9px;
+            padding: 8px 10px;
+            font-size: 12px;
+            font-weight: 800;
+            cursor: pointer;
+        }
+
+        .botao-status-ativo {
+            background: #fff0f0;
+            color: #a31313;
+            border: 1px solid #efcaca;
+        }
+
+        .botao-status-inativo {
+            background: var(--verde-claro);
+            color: var(--verde);
+            border: 1px solid #cfe8d2;
+        }
+
+        .vazio {
+            padding: 36px 10px;
+            text-align: center;
+            color: var(--texto-suave);
+        }
+
+        .vazio strong {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--texto);
+            font-size: 18px;
+        }
+
+        @media (max-width: 780px) {
+            .grade {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .topo {
+                padding: 19px 15px;
+            }
+
+            .topo h1 {
+                font-size: 25px;
+            }
+
+            .container {
+                padding: 18px 14px 30px;
+            }
+
+            .card {
+                padding: 18px 15px;
+            }
+
+            .acoes-topo {
+                flex-direction: column;
+            }
+
+            .botao-link {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<header class="topo">
+    <div class="topo-conteudo">
+        <small>Equipe de entrega</small>
+
+        <h1>Motoboys</h1>
+
+        <p>
+            {{ empresa.nome }}
+        </p>
+    </div>
+</header>
+
+<main class="container">
+
+    <div class="acoes-topo">
+        <a
+            href="{{ url_for('painel') }}"
+            class="botao-link botao-voltar"
+        >
+            ← Voltar ao painel
+        </a>
+    </div>
+
+    <div class="grade">
+
+        <section class="card">
+
+            <h2>Novo motoboy</h2>
+
+            <p class="descricao">
+                Cadastre quem fará as entregas.
+                O login será usado depois no painel mobile do motoboy.
+            </p>
+
+            {% if erro %}
+                <div class="erro">
+                    {{ erro }}
+                </div>
+            {% endif %}
+
+            <form
+                method="post"
+                action="{{ url_for('configuracoes_motoboys') }}"
+                autocomplete="off"
+            >
+
+                <div class="campo">
+                    <label for="nome">
+                        Nome
+                    </label>
+
+                    <input
+                        id="nome"
+                        name="nome"
+                        type="text"
+                        maxlength="120"
+                        placeholder="Ex.: Carlos Silva"
+                        required
+                    >
+                </div>
+
+                <div class="campo">
+                    <label for="telefone">
+                        Telefone
+                    </label>
+
+                    <input
+                        id="telefone"
+                        name="telefone"
+                        type="tel"
+                        maxlength="30"
+                        placeholder="Ex.: (83) 99999-9999"
+                    >
+                </div>
+
+                <div class="campo">
+                    <label for="login">
+                        Login
+                    </label>
+
+                    <input
+                        id="login"
+                        name="login"
+                        type="text"
+                        maxlength="80"
+                        placeholder="Ex.: carlos"
+                        autocapitalize="none"
+                        autocomplete="off"
+                        required
+                    >
+
+                    <span class="ajuda">
+                        Cada motoboy deve ter um login diferente.
+                    </span>
+                </div>
+
+                <div class="campo">
+                    <label for="senha">
+                        Senha inicial
+                    </label>
+
+                    <input
+                        id="senha"
+                        name="senha"
+                        type="password"
+                        minlength="6"
+                        maxlength="100"
+                        placeholder="Mínimo de 6 caracteres"
+                        autocomplete="new-password"
+                        required
+                    >
+
+                    <span class="ajuda">
+                        A senha é armazenada de forma protegida no sistema.
+                    </span>
+                </div>
+
+                <button
+                    type="submit"
+                    class="botao-salvar"
+                >
+                    + Cadastrar motoboy
+                </button>
+
+            </form>
+
+        </section>
+
+        <section class="card">
+
+            <h2>Equipe cadastrada</h2>
+
+            <p class="descricao">
+                Ative ou inative motoboys sem apagar o histórico de entregas.
+            </p>
+
+            {% if motoboys %}
+
+                <div class="tabela-responsiva">
+
+                    <table>
+
+                        <thead>
+                            <tr>
+                                <th>Motoboy</th>
+                                <th>Telefone</th>
+                                <th>Login</th>
+                                <th>Status</th>
+                                <th>Ação</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+
+                            {% for motoboy in motoboys %}
+
+                                <tr>
+
+                                    <td class="motoboy-nome">
+                                        {{ motoboy.nome }}
+                                    </td>
+
+                                    <td>
+                                        {{ motoboy.telefone or "-" }}
+                                    </td>
+
+                                    <td class="login">
+                                        {{ motoboy.login }}
+                                    </td>
+
+                                    <td>
+                                        {% if motoboy.ativo %}
+
+                                            <span class="status status-ativo">
+                                                Ativo
+                                            </span>
+
+                                        {% else %}
+
+                                            <span class="status status-inativo">
+                                                Inativo
+                                            </span>
+
+                                        {% endif %}
+                                    </td>
+
+                                    <td>
+                                        <form
+                                            method="post"
+                                            action="{{ url_for('alterar_status_motoboy', motoboy_id=motoboy.id) }}"
+                                        >
+                                            <button
+                                                type="submit"
+                                                class="botao-acao {% if motoboy.ativo %}botao-status-ativo{% else %}botao-status-inativo{% endif %}"
+                                            >
+                                                {% if motoboy.ativo %}
+                                                    Inativar
+                                                {% else %}
+                                                    Ativar
+                                                {% endif %}
+                                            </button>
+                                        </form>
+                                    </td>
+
+                                </tr>
+
+                            {% endfor %}
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            {% else %}
+
+                <div class="vazio">
+
+                    <strong>
+                        Nenhum motoboy cadastrado ainda.
+                    </strong>
+
+                    Cadastre o primeiro motoboy no formulário ao lado.
+
+                </div>
+
+            {% endif %}
+
+        </section>
+
+    </div>
+
+</main>
+
+</body>
+</html>

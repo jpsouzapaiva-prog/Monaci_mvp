@@ -112,6 +112,78 @@ class BairroEntrega(db.Model):
 
 
 # ============================================================
+# MOTOBOY
+# ============================================================
+
+class Motoboy(db.Model):
+
+    __tablename__ = "motoboys"
+
+    id = db.Column(
+        db.Integer,
+        primary_key=True
+    )
+
+    empresa_id = db.Column(
+        db.Integer,
+        db.ForeignKey(
+            "empresas.id"
+        ),
+        nullable=False,
+        index=True
+    )
+
+    nome = db.Column(
+        db.String(120),
+        nullable=False
+    )
+
+    telefone = db.Column(
+        db.String(30),
+        nullable=False,
+        default=""
+    )
+
+    login = db.Column(
+        db.String(80),
+        nullable=False
+    )
+
+    senha_hash = db.Column(
+        db.String(255),
+        nullable=False
+    )
+
+    ativo = db.Column(
+        db.Boolean,
+        nullable=False,
+        default=True
+    )
+
+    criado_em = db.Column(
+        db.DateTime,
+        nullable=False,
+        default=datetime.now
+    )
+
+    empresa = db.relationship(
+        "Empresa",
+        backref=db.backref(
+            "motoboys",
+            lazy=True
+        )
+    )
+
+    __table_args__ = (
+        db.UniqueConstraint(
+            "empresa_id",
+            "login",
+            name="uq_motoboy_empresa_login"
+        ),
+    )
+
+
+# ============================================================
 # PEDIDO
 # ============================================================
 
@@ -128,6 +200,15 @@ class Pedido(db.Model):
         db.Integer,
         db.ForeignKey(
             "empresas.id"
+        ),
+        nullable=True,
+        index=True
+    )
+
+    motoboy_id = db.Column(
+        db.Integer,
+        db.ForeignKey(
+            "motoboys.id"
         ),
         nullable=True,
         index=True
@@ -199,6 +280,11 @@ class Pedido(db.Model):
         nullable=True
     )
 
+    hora_aceite_entrega = db.Column(
+        db.DateTime,
+        nullable=True
+    )
+
     hora_saida_entrega = db.Column(
         db.DateTime,
         nullable=True
@@ -211,6 +297,14 @@ class Pedido(db.Model):
 
     empresa = db.relationship(
         "Empresa",
+        backref=db.backref(
+            "pedidos",
+            lazy=True
+        )
+    )
+
+    motoboy = db.relationship(
+        "Motoboy",
         backref=db.backref(
             "pedidos",
             lazy=True

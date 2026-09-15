@@ -9,6 +9,7 @@ from flask import (
     render_template_string
 )
 from flask_migrate import Migrate
+from werkzeug.security import generate_password_hash
 from datetime import datetime
 import os
 import hmac
@@ -16,7 +17,7 @@ from functools import wraps
 
 from cardapio import cardapio
 from config import obter_configuracao
-from models import db, Empresa, BairroEntrega, Pedido, ItemPedido
+from models import db, Empresa, BairroEntrega, Motoboy, Pedido, ItemPedido
 
 
 # ============================================================
@@ -1802,6 +1803,209 @@ def alterar_status_bairro_entrega(
     return redirect(
         url_for(
             "configuracoes_entregas"
+        )
+    )
+
+
+
+# ============================================================
+# CONFIGURACAO DE MOTOBOYS
+# ============================================================
+
+@app.route(
+    "/configuracoes/motoboys",
+    methods=["GET", "POST"]
+)
+@login_painel_obrigatorio
+def configuracoes_motoboys():
+
+    empresa = buscar_empresa_padrao()
+
+    if empresa is None:
+        return (
+            "Empresa padrao nao configurada.",
+            503
+        )
+
+    erro = None
+
+    if request.method == "POST":
+
+        nome = texto_seguro(
+            request.form.get(
+                "nome"
+            ),
+            120
+        )
+
+        telefone = texto_seguro(
+            request.form.get(
+                "telefone"
+            ),
+            30
+        )
+
+        login_motoboy = texto_seguro(
+            request.form.get(
+                "login"
+            ),
+            80
+        ).lower()
+
+        senha = str(
+            request.form.get(
+                "senha",
+                ""
+            )
+        ).strip()
+
+        if nome == "":
+            erro = (
+                "Informe o nome do motoboy."
+            )
+
+        elif login_motoboy == "":
+            erro = (
+                "Informe o login do motoboy."
+            )
+
+        elif len(senha) < 6:
+            erro = (
+                "A senha deve ter pelo menos 6 caracteres."
+            )
+
+        if erro is None:
+
+            motoboy_existente = (
+                Motoboy.query
+                .filter(
+                    Motoboy.empresa_id
+                    == empresa.id,
+                    db.func.lower(
+                        Motoboy.login
+                    )
+                    == login_motoboy
+                )
+                .first()
+            )
+
+            if motoboy_existente is not None:
+                erro = (
+                    "Este login ja esta sendo utilizado."
+                )
+
+        if erro is None:
+
+            novo_motoboy = Motoboy(
+                empresa_id=empresa.id,
+                nome=nome,
+                telefone=telefone,
+                login=login_motoboy,
+                senha_hash=generate_password_hash(
+                    senha
+                ),
+                ativo=True
+            )
+
+            try:
+
+                db.session.add(
+                    novo_motoboy
+                )
+
+                db.session.commit()
+
+                return redirect(
+                    url_for(
+                        "configuracoes_motoboys"
+                    )
+                )
+
+            except Exception:
+
+                db.session.rollback()
+
+                app.logger.exception(
+                    "Erro ao cadastrar motoboy."
+                )
+
+                erro = (
+                    "Nao foi possivel cadastrar o motoboy."
+                )
+
+    motoboys = (
+        Motoboy.query
+        .filter_by(
+            empresa_id=empresa.id
+        )
+        .order_by(
+            Motoboy.nome.asc()
+        )
+        .all()
+    )
+
+    return render_template(
+        "motoboys.html",
+        empresa=empresa,
+        motoboys=motoboys,
+        erro=erro
+    )
+
+
+# ============================================================
+# ATIVAR / INATIVAR MOTOBOY
+# ============================================================
+
+@app.route(
+    "/configuracoes/motoboys/<int:motoboy_id>/status",
+    methods=["POST"]
+)
+@login_painel_obrigatorio
+def alterar_status_motoboy(
+    motoboy_id
+):
+
+    empresa = buscar_empresa_padrao()
+
+    if empresa is None:
+        return (
+            "Empresa padrao nao configurada.",
+            503
+        )
+
+    motoboy = Motoboy.query.filter_by(
+        id=motoboy_id,
+        empresa_id=empresa.id
+    ).first()
+
+    if motoboy is None:
+        return (
+            "Motoboy nao encontrado.",
+            404
+        )
+
+    motoboy.ativo = not motoboy.ativo
+
+    try:
+
+        db.session.commit()
+
+    except Exception:
+
+        db.session.rollback()
+
+        app.logger.exception(
+            "Erro ao alterar status do motoboy."
+        )
+
+        return (
+            "Nao foi possivel alterar o status do motoboy.",
+            500
+        )
+
+    return redirect(
+        url_for(
+            "configuracoes_motoboys"
         )
     )
 
