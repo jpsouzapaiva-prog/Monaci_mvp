@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>Acesso do Motoboy - Família Monaci</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        :root {
+            --vermelho: #c62828;
+            --vermelho-escuro: #8f1515;
+            --amarelo: #ffd600;
+            --fundo: #f5f2ed;
+            --branco: #ffffff;
+            --texto: #242424;
+            --texto-suave: #6e6e6e;
+            --borda: #e6dfd8;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: Arial, Helvetica, sans-serif;
+            background:
+                radial-gradient(
+                    circle at 90% 0%,
+                    rgba(198, 40, 40, .08),
+                    transparent 30%
+                ),
+                linear-gradient(
+                    180deg,
+                    #faf8f5,
+                    var(--fundo)
+                );
+            color: var(--texto);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 22px;
+        }
+
+        .login {
+            width: 100%;
+            max-width: 420px;
+            background: var(--branco);
+            border-radius: 22px;
+            overflow: hidden;
+            box-shadow:
+                0 18px 50px rgba(0, 0, 0, .12);
+        }
+
+        .topo {
+            background:
+                linear-gradient(
+                    135deg,
+                    #6f1010,
+                    var(--vermelho-escuro),
+                    var(--vermelho)
+                );
+            color: white;
+            text-align: center;
+            padding: 30px 24px 28px;
+        }
+
+        .icone {
+            font-size: 46px;
+            margin-bottom: 8px;
+        }
+
+        .topo h1 {
+            margin: 0;
+            font-size: 25px;
+        }
+
+        .topo p {
+            margin: 7px 0 0;
+            opacity: .88;
+            font-size: 14px;
+        }
+
+        .conteudo {
+            padding: 26px;
+        }
+
+        .erro {
+            background: #fff0f0;
+            border: 1px solid #efbbbb;
+            color: #9f1e1e;
+            padding: 12px;
+            border-radius: 10px;
+            margin-bottom: 18px;
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .campo {
+            margin-bottom: 18px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+            font-weight: 800;
+        }
+
+        input {
+            width: 100%;
+            min-height: 50px;
+            padding: 13px 14px;
+            border: 1px solid var(--borda);
+            border-radius: 12px;
+            font-size: 16px;
+            outline: none;
+            background: white;
+        }
+
+        input:focus {
+            border-color: var(--vermelho);
+            box-shadow:
+                0 0 0 3px rgba(198, 40, 40, .10);
+        }
+
+        button {
+            width: 100%;
+            min-height: 52px;
+            border: 0;
+            border-radius: 12px;
+            background:
+                linear-gradient(
+                    135deg,
+                    var(--vermelho-escuro),
+                    var(--vermelho)
+                );
+            color: white;
+            font-size: 16px;
+            font-weight: 900;
+            cursor: pointer;
+        }
+
+        button:active {
+            transform: scale(.99);
+        }
+
+        .rodape {
+            text-align: center;
+            margin-top: 18px;
+            color: var(--texto-suave);
+            font-size: 12px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <main class="login">
+
+        <section class="topo">
+
+            <div class="icone">
+                🛵
+            </div>
+
+            <h1>
+                Área do Motoboy
+            </h1>
+
+            <p>
+                Família Monaci
+            </p>
+
+        </section>
+
+        <section class="conteudo">
+
+            {% if erro %}
+                <div class="erro">
+                    {{ erro }}
+                </div>
+            {% endif %}
+
+            <form method="post">
+
+                <div class="campo">
+
+                    <label for="login">
+                        Login
+                    </label>
+
+                    <input
+                        id="login"
+                        name="login"
+                        type="text"
+                        autocomplete="username"
+                        required
+                        autofocus
+                    >
+
+                </div>
+
+                <div class="campo">
+
+                    <label for="senha">
+                        Senha
+                    </label>
+
+                    <input
+                        id="senha"
+                        name="senha"
+                        type="password"
+                        autocomplete="current-password"
+                        required
+                    >
+
+                </div>
+
+                <button type="submit">
+                    Entrar
+                </button>
+
+            </form>
+
+            <div class="rodape">
+                Acesso exclusivo para entregadores cadastrados.
+            </div>
+
+        </section>
+
+    </main>
+
+</body>
+</html>

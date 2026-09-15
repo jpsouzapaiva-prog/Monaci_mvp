@@ -9,7 +9,7 @@ from flask import (
     render_template_string
 )
 from flask_migrate import Migrate
-from werkzeug.security import generate_password_hash
+from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
 import os
 import hmac
@@ -209,6 +209,83 @@ def login_painel_obrigatorio(
             return redirect(
                 url_for(
                     "login"
+                )
+            )
+
+        return funcao(
+            *args,
+            **kwargs
+        )
+
+    return wrapper
+
+
+# ============================================================
+# AUTENTICACAO DO MOTOBOY
+# ============================================================
+
+def motoboy_autenticado():
+
+    return session.get(
+        "motoboy_id"
+    ) is not None
+
+
+def motoboy_login_obrigatorio(
+    funcao
+):
+
+    @wraps(
+        funcao
+    )
+    def wrapper(
+        *args,
+        **kwargs
+    ):
+
+        motoboy_id = session.get(
+            "motoboy_id"
+        )
+
+        if motoboy_id is None:
+
+            return redirect(
+                url_for(
+                    "login_motoboy"
+                )
+            )
+
+        empresa = buscar_empresa_padrao()
+
+        if empresa is None:
+
+            session.pop(
+                "motoboy_id",
+                None
+            )
+
+            return redirect(
+                url_for(
+                    "login_motoboy"
+                )
+            )
+
+        motoboy = Motoboy.query.filter_by(
+            id=motoboy_id,
+            empresa_id=empresa.id,
+            ativo=True
+        ).first()
+
+        if motoboy is None:
+
+            session.pop(
+                "motoboy_id",
+                None
+            )
+
+            return redirect(
+                url_for(
+                    "login_motoboy"
                 )
             )
 
@@ -1441,6 +1518,485 @@ def logout():
         "mensagem":
             "Sessao encerrada."
     })
+
+
+# ============================================================
+# LOGIN E LOGOUT DO MOTOBOY
+# ============================================================
+
+@app.route(
+    "/motoboy/login",
+    methods=["GET", "POST"]
+)
+def login_motoboy():
+
+    empresa = buscar_empresa_padrao()
+
+    if empresa is None:
+
+        return (
+            "Empresa padrao nao configurada.",
+            503
+        )
+
+    if motoboy_autenticado():
+
+        motoboy_id = session.get(
+            "motoboy_id"
+        )
+
+        motoboy = Motoboy.query.filter_by(
+            id=motoboy_id,
+            empresa_id=empresa.id,
+            ativo=True
+        ).first()
+
+        if motoboy is not None:
+
+            return redirect(
+                url_for(
+                    "area_motoboy"
+                )
+            )
+
+        session.pop(
+            "motoboy_id",
+            None
+        )
+
+    erro = None
+
+    if request.method == "POST":
+
+        login_recebido = texto_seguro(
+            request.form.get(
+                "login"
+            ),
+            80
+        ).lower()
+
+        senha_recebida = str(
+            request.form.get(
+                "senha",
+                ""
+            )
+        )
+
+        motoboy = Motoboy.query.filter(
+            Motoboy.empresa_id
+            == empresa.id,
+            Motoboy.ativo
+            == True,
+            db.func.lower(
+                Motoboy.login
+            )
+            == login_recebido
+        ).first()
+
+        if (
+            motoboy is not None
+            and check_password_hash(
+                motoboy.senha_hash,
+                senha_recebida
+            )
+        ):
+
+            session.pop(
+                "painel_autenticado",
+                None
+            )
+
+            session[
+                "motoboy_id"
+            ] = motoboy.id
+
+            session.permanent = True
+
+            return redirect(
+                url_for(
+                    "area_motoboy"
+                )
+            )
+
+        erro = (
+            "Login ou senha invalidos."
+        )
+
+    return render_template(
+        "login_motoboy.html",
+        empresa=empresa,
+        erro=erro
+    )
+
+
+@app.route(
+    "/motoboy/logout",
+    methods=["POST"]
+)
+@motoboy_login_obrigatorio
+def logout_motoboy():
+
+    session.pop(
+        "motoboy_id",
+        None
+    )
+
+    return redirect(
+        url_for(
+            "login_motoboy"
+        )
+    )
+
+
+# ============================================================
+# PAINEL DO MOTOBOY
+# ============================================================
+
+@app.route(
+    "/motoboy"
+)
+@motoboy_login_obrigatorio
+def area_motoboy():
+
+    empresa = buscar_empresa_padrao()
+
+    if empresa is None:
+
+        return (
+            "Empresa padrao nao configurada.",
+            503
+        )
+
+    motoboy = Motoboy.query.filter_by(
+        id=session.get(
+            "motoboy_id"
+        ),
+        empresa_id=empresa.id,
+        ativo=True
+    ).first()
+
+    if motoboy is None:
+
+        session.pop(
+            "motoboy_id",
+            None
+        )
+
+        return redirect(
+            url_for(
+                "login_motoboy"
+            )
+        )
+
+    minhas_entregas = (
+        Pedido.query
+        .filter(
+            Pedido.empresa_id
+            == empresa.id,
+            Pedido.tipo
+            == "entrega",
+            Pedido.motoboy_id
+            == motoboy.id,
+            Pedido.status.in_([
+                "PRONTO PARA ENTREGA",
+                "SAIU PARA ENTREGA"
+            ])
+        )
+        .order_by(
+            Pedido.id.asc()
+        )
+        .all()
+    )
+
+    entregas_disponiveis = (
+        Pedido.query
+        .filter(
+            Pedido.empresa_id
+            == empresa.id,
+            Pedido.tipo
+            == "entrega",
+            Pedido.status
+            == "PRONTO PARA ENTREGA",
+            Pedido.motoboy_id.is_(None)
+        )
+        .order_by(
+            Pedido.id.asc()
+        )
+        .all()
+    )
+
+    return render_template(
+        "painel_motoboy.html",
+        empresa=empresa,
+        motoboy=motoboy,
+        minhas_entregas=minhas_entregas,
+        entregas_disponiveis=entregas_disponiveis
+    )
+
+
+# ============================================================
+# MOTOBOY - ACEITAR ENTREGA
+# ============================================================
+
+@app.route(
+    "/motoboy/pedidos/<int:pedido_id>/aceitar",
+    methods=["POST"]
+)
+@motoboy_login_obrigatorio
+def motoboy_aceitar_entrega(
+    pedido_id
+):
+
+    empresa = buscar_empresa_padrao()
+
+    if empresa is None:
+
+        return (
+            "Empresa padrao nao configurada.",
+            503
+        )
+
+    motoboy = Motoboy.query.filter_by(
+        id=session.get(
+            "motoboy_id"
+        ),
+        empresa_id=empresa.id,
+        ativo=True
+    ).first()
+
+    if motoboy is None:
+
+        return redirect(
+            url_for(
+                "login_motoboy"
+            )
+        )
+
+    pedido = Pedido.query.filter_by(
+        id=pedido_id,
+        empresa_id=empresa.id,
+        tipo="entrega",
+        status="PRONTO PARA ENTREGA",
+        motoboy_id=None
+    ).first()
+
+    if pedido is None:
+
+        return (
+            "Entrega indisponivel ou ja aceita por outro motoboy.",
+            409
+        )
+
+    pedido.motoboy_id = (
+        motoboy.id
+    )
+
+    pedido.hora_aceite_entrega = (
+        datetime.now()
+    )
+
+    try:
+
+        db.session.commit()
+
+    except Exception:
+
+        db.session.rollback()
+
+        app.logger.exception(
+            "Erro ao aceitar entrega. pedido_id=%s motoboy_id=%s",
+            pedido_id,
+            motoboy.id
+        )
+
+        return (
+            "Nao foi possivel aceitar a entrega.",
+            500
+        )
+
+    return redirect(
+        url_for(
+            "area_motoboy"
+        )
+    )
+
+
+# ============================================================
+# MOTOBOY - SAIU PARA ENTREGA
+# ============================================================
+
+@app.route(
+    "/motoboy/pedidos/<int:pedido_id>/sair",
+    methods=["POST"]
+)
+@motoboy_login_obrigatorio
+def motoboy_sair_para_entrega(
+    pedido_id
+):
+
+    empresa = buscar_empresa_padrao()
+
+    if empresa is None:
+
+        return (
+            "Empresa padrao nao configurada.",
+            503
+        )
+
+    motoboy_id = session.get(
+        "motoboy_id"
+    )
+
+    pedido = Pedido.query.filter_by(
+        id=pedido_id,
+        empresa_id=empresa.id,
+        tipo="entrega",
+        motoboy_id=motoboy_id
+    ).first()
+
+    if pedido is None:
+
+        return (
+            "Entrega nao encontrada para este motoboy.",
+            404
+        )
+
+    (
+        transicao_valida,
+        erro_transicao
+    ) = validar_transicao_status(
+        pedido,
+        "SAIU PARA ENTREGA"
+    )
+
+    if not transicao_valida:
+
+        return (
+            erro_transicao,
+            400
+        )
+
+    pedido.status = (
+        "SAIU PARA ENTREGA"
+    )
+
+    pedido.hora_saida_entrega = (
+        datetime.now()
+    )
+
+    try:
+
+        db.session.commit()
+
+    except Exception:
+
+        db.session.rollback()
+
+        app.logger.exception(
+            "Erro ao iniciar entrega. pedido_id=%s motoboy_id=%s",
+            pedido_id,
+            motoboy_id
+        )
+
+        return (
+            "Nao foi possivel iniciar a entrega.",
+            500
+        )
+
+    return redirect(
+        url_for(
+            "area_motoboy"
+        )
+    )
+
+
+# ============================================================
+# MOTOBOY - CONCLUIR ENTREGA
+# ============================================================
+
+@app.route(
+    "/motoboy/pedidos/<int:pedido_id>/finalizar",
+    methods=["POST"]
+)
+@motoboy_login_obrigatorio
+def motoboy_finalizar_entrega(
+    pedido_id
+):
+
+    empresa = buscar_empresa_padrao()
+
+    if empresa is None:
+
+        return (
+            "Empresa padrao nao configurada.",
+            503
+        )
+
+    motoboy_id = session.get(
+        "motoboy_id"
+    )
+
+    pedido = Pedido.query.filter_by(
+        id=pedido_id,
+        empresa_id=empresa.id,
+        tipo="entrega",
+        motoboy_id=motoboy_id
+    ).first()
+
+    if pedido is None:
+
+        return (
+            "Entrega nao encontrada para este motoboy.",
+            404
+        )
+
+    (
+        transicao_valida,
+        erro_transicao
+    ) = validar_transicao_status(
+        pedido,
+        "FINALIZADO"
+    )
+
+    if not transicao_valida:
+
+        return (
+            erro_transicao,
+            400
+        )
+
+    pedido.status = (
+        "FINALIZADO"
+    )
+
+    pedido.hora_finalizado = (
+        datetime.now()
+    )
+
+    try:
+
+        db.session.commit()
+
+    except Exception:
+
+        db.session.rollback()
+
+        app.logger.exception(
+            "Erro ao concluir entrega. pedido_id=%s motoboy_id=%s",
+            pedido_id,
+            motoboy_id
+        )
+
+        return (
+            "Nao foi possivel concluir a entrega.",
+            500
+        )
+
+    return redirect(
+        url_for(
+            "area_motoboy"
+        )
+    )
 
 
 # ============================================================

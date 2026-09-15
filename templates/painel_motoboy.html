@@ -1,0 +1,695 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>Entregas - {{ empresa.nome }}</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        :root {
+            --vermelho: #c62828;
+            --vermelho-escuro: #8f1515;
+            --amarelo: #ffd600;
+            --verde: #2e7d32;
+            --verde-claro: #eaf6ec;
+            --azul: #1565c0;
+            --azul-claro: #eaf2fb;
+            --fundo: #f5f2ed;
+            --branco: #ffffff;
+            --texto: #242424;
+            --texto-suave: #6e6e6e;
+            --borda: #e8e1da;
+            --sombra: 0 10px 28px rgba(0, 0, 0, .08);
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: Arial, Helvetica, sans-serif;
+            background:
+                linear-gradient(
+                    180deg,
+                    #faf8f5 0%,
+                    var(--fundo) 100%
+                );
+            color: var(--texto);
+        }
+
+        button,
+        a {
+            font: inherit;
+        }
+
+        .topo {
+            background:
+                linear-gradient(
+                    135deg,
+                    #6f1010,
+                    var(--vermelho-escuro),
+                    var(--vermelho)
+                );
+            color: white;
+            padding: 22px 18px;
+            box-shadow:
+                0 8px 24px rgba(111, 16, 16, .24);
+        }
+
+        .topo-interno {
+            width: 100%;
+            max-width: 720px;
+            margin: 0 auto;
+        }
+
+        .topo-label {
+            font-size: 12px;
+            font-weight: 900;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+            opacity: .8;
+        }
+
+        .topo h1 {
+            margin: 5px 0 4px;
+            font-size: 25px;
+        }
+
+        .topo p {
+            margin: 0;
+            opacity: .9;
+            font-size: 14px;
+        }
+
+        .pagina {
+            width: 100%;
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 18px 14px 40px;
+        }
+
+        .usuario {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            background: white;
+            border: 1px solid var(--borda);
+            border-radius: 16px;
+            padding: 14px;
+            margin-bottom: 20px;
+            box-shadow: var(--sombra);
+        }
+
+        .usuario-info {
+            min-width: 0;
+        }
+
+        .usuario-label {
+            color: var(--texto-suave);
+            font-size: 12px;
+            margin-bottom: 3px;
+        }
+
+        .usuario-nome {
+            font-size: 17px;
+            font-weight: 900;
+        }
+
+        .botao-sair {
+            border: 0;
+            background: #f1eeee;
+            color: #555;
+            border-radius: 10px;
+            padding: 10px 13px;
+            font-weight: 800;
+            cursor: pointer;
+        }
+
+        .secao {
+            margin-top: 24px;
+        }
+
+        .secao-topo {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .secao h2 {
+            margin: 0;
+            font-size: 19px;
+        }
+
+        .contador {
+            background: #ece8e2;
+            color: #555;
+            border-radius: 999px;
+            padding: 5px 9px;
+            font-size: 12px;
+            font-weight: 900;
+        }
+
+        .pedido {
+            background: white;
+            border: 1px solid var(--borda);
+            border-radius: 18px;
+            margin-bottom: 14px;
+            overflow: hidden;
+            box-shadow: var(--sombra);
+        }
+
+        .pedido-topo {
+            padding: 14px 15px;
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            align-items: center;
+            border-bottom: 1px solid #eee8e2;
+        }
+
+        .pedido-numero {
+            font-size: 18px;
+            font-weight: 900;
+        }
+
+        .status {
+            border-radius: 999px;
+            padding: 6px 9px;
+            font-size: 11px;
+            font-weight: 900;
+            text-transform: uppercase;
+        }
+
+        .status-pronto {
+            background: var(--verde-claro);
+            color: var(--verde);
+        }
+
+        .status-rota {
+            background: var(--azul-claro);
+            color: var(--azul);
+        }
+
+        .pedido-corpo {
+            padding: 15px;
+        }
+
+        .linha {
+            margin-bottom: 10px;
+        }
+
+        .rotulo {
+            display: block;
+            color: var(--texto-suave);
+            font-size: 11px;
+            font-weight: 800;
+            text-transform: uppercase;
+            margin-bottom: 3px;
+        }
+
+        .valor {
+            font-size: 15px;
+            font-weight: 700;
+            line-height: 1.35;
+        }
+
+        .endereco {
+            background: #f7f5f2;
+            border-radius: 12px;
+            padding: 12px;
+            margin: 12px 0;
+        }
+
+        .resumo {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 12px;
+        }
+
+        .resumo-item {
+            background: #faf8f5;
+            border-radius: 12px;
+            padding: 11px;
+        }
+
+        .acoes {
+            display: grid;
+            gap: 9px;
+            margin-top: 15px;
+        }
+
+        .botao {
+            min-height: 50px;
+            border: 0;
+            border-radius: 12px;
+            padding: 13px 14px;
+            text-decoration: none;
+            text-align: center;
+            font-weight: 900;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .botao-aceitar {
+            background:
+                linear-gradient(
+                    135deg,
+                    var(--vermelho-escuro),
+                    var(--vermelho)
+                );
+            color: white;
+        }
+
+        .botao-rota {
+            background: #202020;
+            color: white;
+        }
+
+        .botao-saiu {
+            background: var(--azul);
+            color: white;
+        }
+
+        .botao-finalizar {
+            background: var(--verde);
+            color: white;
+        }
+
+        .vazio {
+            background: white;
+            border: 1px dashed #d8d1ca;
+            border-radius: 16px;
+            padding: 28px 18px;
+            text-align: center;
+            color: var(--texto-suave);
+        }
+
+        .vazio-icone {
+            font-size: 34px;
+            margin-bottom: 8px;
+        }
+
+        @media (max-width: 520px) {
+            .pagina {
+                padding-left: 11px;
+                padding-right: 11px;
+            }
+
+            .resumo {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <header class="topo">
+        <div class="topo-interno">
+
+            <div class="topo-label">
+                🛵 Equipe de entrega
+            </div>
+
+            <h1>
+                Minhas entregas
+            </h1>
+
+            <p>
+                {{ empresa.nome }}
+            </p>
+
+        </div>
+    </header>
+
+
+    <main class="pagina">
+
+        <section class="usuario">
+
+            <div class="usuario-info">
+
+                <div class="usuario-label">
+                    Motoboy conectado
+                </div>
+
+                <div class="usuario-nome">
+                    {{ motoboy.nome }}
+                </div>
+
+            </div>
+
+            <form
+                method="post"
+                action="/motoboy/logout"
+            >
+                <button
+                    type="submit"
+                    class="botao-sair"
+                >
+                    Sair
+                </button>
+            </form>
+
+        </section>
+
+
+        <section class="secao">
+
+            <div class="secao-topo">
+
+                <h2>
+                    Minha entrega
+                </h2>
+
+                <span class="contador">
+                    {{ minhas_entregas|length }}
+                </span>
+
+            </div>
+
+            {% if minhas_entregas %}
+
+                {% for pedido in minhas_entregas %}
+
+                    <article class="pedido">
+
+                        <div class="pedido-topo">
+
+                            <div class="pedido-numero">
+                                Pedido #{{ "%04d"|format(pedido.id) }}
+                            </div>
+
+                            {% if pedido.status == "SAIU PARA ENTREGA" %}
+
+                                <span class="status status-rota">
+                                    Em rota
+                                </span>
+
+                            {% else %}
+
+                                <span class="status status-pronto">
+                                    Pronto
+                                </span>
+
+                            {% endif %}
+
+                        </div>
+
+                        <div class="pedido-corpo">
+
+                            <div class="linha">
+
+                                <span class="rotulo">
+                                    Cliente
+                                </span>
+
+                                <span class="valor">
+                                    {{ pedido.cliente }}
+                                </span>
+
+                            </div>
+
+
+                            <div class="endereco">
+
+                                <span class="rotulo">
+                                    Endereço de entrega
+                                </span>
+
+                                <div class="valor">
+                                    {{ pedido.endereco }}
+                                </div>
+
+                            </div>
+
+
+                            <div class="linha">
+
+                                <span class="rotulo">
+                                    Bairro
+                                </span>
+
+                                <span class="valor">
+                                    {{ pedido.bairro_entrega }}
+                                </span>
+
+                            </div>
+
+
+                            <div class="resumo">
+
+                                <div class="resumo-item">
+
+                                    <span class="rotulo">
+                                        Pagamento
+                                    </span>
+
+                                    <div class="valor">
+                                        {{ pedido.pagamento }}
+                                    </div>
+
+                                </div>
+
+
+                                <div class="resumo-item">
+
+                                    <span class="rotulo">
+                                        Total
+                                    </span>
+
+                                    <div class="valor">
+                                        R$ {{ "%.2f"|format(pedido.total)|replace(".", ",") }}
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+
+                            <div class="acoes">
+
+                                <a
+                                    class="botao botao-rota"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    href="https://www.google.com/maps/search/?api=1&query={{ pedido.endereco|urlencode }}"
+                                >
+                                    📍 Abrir rota
+                                </a>
+
+
+                                {% if pedido.status == "PRONTO PARA ENTREGA" %}
+
+                                    <form
+                                        method="post"
+                                        action="/motoboy/pedidos/{{ pedido.id }}/sair"
+                                    >
+                                        <button
+                                            type="submit"
+                                            class="botao botao-saiu"
+                                            style="width:100%;"
+                                        >
+                                            🛵 Saiu para entrega
+                                        </button>
+                                    </form>
+
+                                {% endif %}
+
+
+                                {% if pedido.status == "SAIU PARA ENTREGA" %}
+
+                                    <form
+                                        method="post"
+                                        action="/motoboy/pedidos/{{ pedido.id }}/finalizar"
+                                    >
+                                        <button
+                                            type="submit"
+                                            class="botao botao-finalizar"
+                                            style="width:100%;"
+                                        >
+                                            ✅ Entrega concluída
+                                        </button>
+                                    </form>
+
+                                {% endif %}
+
+                            </div>
+
+                        </div>
+
+                    </article>
+
+                {% endfor %}
+
+            {% else %}
+
+                <div class="vazio">
+
+                    <div class="vazio-icone">
+                        🛵
+                    </div>
+
+                    Você ainda não possui uma entrega em andamento.
+
+                </div>
+
+            {% endif %}
+
+        </section>
+
+
+        <section class="secao">
+
+            <div class="secao-topo">
+
+                <h2>
+                    Entregas disponíveis
+                </h2>
+
+                <span class="contador">
+                    {{ entregas_disponiveis|length }}
+                </span>
+
+            </div>
+
+            {% if entregas_disponiveis %}
+
+                {% for pedido in entregas_disponiveis %}
+
+                    <article class="pedido">
+
+                        <div class="pedido-topo">
+
+                            <div class="pedido-numero">
+                                Pedido #{{ "%04d"|format(pedido.id) }}
+                            </div>
+
+                            <span class="status status-pronto">
+                                Disponível
+                            </span>
+
+                        </div>
+
+                        <div class="pedido-corpo">
+
+                            <div class="linha">
+
+                                <span class="rotulo">
+                                    Cliente
+                                </span>
+
+                                <span class="valor">
+                                    {{ pedido.cliente }}
+                                </span>
+
+                            </div>
+
+
+                            <div class="endereco">
+
+                                <span class="rotulo">
+                                    Endereço
+                                </span>
+
+                                <div class="valor">
+                                    {{ pedido.endereco }}
+                                </div>
+
+                            </div>
+
+
+                            <div class="linha">
+
+                                <span class="rotulo">
+                                    Bairro
+                                </span>
+
+                                <span class="valor">
+                                    {{ pedido.bairro_entrega }}
+                                </span>
+
+                            </div>
+
+
+                            <div class="resumo">
+
+                                <div class="resumo-item">
+
+                                    <span class="rotulo">
+                                        Pagamento
+                                    </span>
+
+                                    <div class="valor">
+                                        {{ pedido.pagamento }}
+                                    </div>
+
+                                </div>
+
+
+                                <div class="resumo-item">
+
+                                    <span class="rotulo">
+                                        Total
+                                    </span>
+
+                                    <div class="valor">
+                                        R$ {{ "%.2f"|format(pedido.total)|replace(".", ",") }}
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+
+                            <div class="acoes">
+
+                                <form
+                                    method="post"
+                                    action="/motoboy/pedidos/{{ pedido.id }}/aceitar"
+                                >
+                                    <button
+                                        type="submit"
+                                        class="botao botao-aceitar"
+                                        style="width:100%;"
+                                    >
+                                        ✅ Aceitar entrega
+                                    </button>
+                                </form>
+
+                            </div>
+
+                        </div>
+
+                    </article>
+
+                {% endfor %}
+
+            {% else %}
+
+                <div class="vazio">
+
+                    <div class="vazio-icone">
+                        📦
+                    </div>
+
+                    Nenhuma entrega disponível no momento.
+
+                </div>
+
+            {% endif %}
+
+        </section>
+
+    </main>
+
+</body>
+</html>
