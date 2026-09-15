@@ -1772,6 +1772,30 @@ def motoboy_aceitar_entrega(
             )
         )
 
+    entrega_ativa = (
+        Pedido.query
+        .filter(
+            Pedido.empresa_id
+            == empresa.id,
+            Pedido.tipo
+            == "entrega",
+            Pedido.motoboy_id
+            == motoboy.id,
+            Pedido.status.in_([
+                "PRONTO PARA ENTREGA",
+                "SAIU PARA ENTREGA"
+            ])
+        )
+        .first()
+    )
+
+    if entrega_ativa is not None:
+
+        return (
+            "Conclua a entrega atual antes de aceitar outra.",
+            409
+        )
+
     pedido = Pedido.query.filter_by(
         id=pedido_id,
         empresa_id=empresa.id,
