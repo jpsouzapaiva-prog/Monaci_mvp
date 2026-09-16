@@ -537,6 +537,56 @@ def texto_seguro(
     ]
 
 
+def normalizar_cep(
+    valor
+):
+    """
+    Mantem somente os 8 digitos do CEP.
+    Retorna string vazia quando o formato nao e valido.
+    """
+
+    digitos = "".join(
+        caractere
+        for caractere
+        in str(
+            valor or ""
+        )
+        if caractere.isdigit()
+    )
+
+    if len(
+        digitos
+    ) != 8:
+
+        return ""
+
+    return digitos
+
+
+def normalizar_uf(
+    valor
+):
+    """
+    Normaliza e valida a UF recebida do checkout.
+    """
+
+    uf = texto_seguro(
+        valor,
+        2
+    ).upper()
+
+    if (
+        len(
+            uf
+        ) != 2
+        or not uf.isalpha()
+    ):
+
+        return ""
+
+    return uf
+
+
 def buscar_produto(
     produto_id
 ):
@@ -667,6 +717,15 @@ def pedido_para_dict(
 
         "bairro_entrega":
             pedido.bairro_entrega or "",
+
+        "cep_entrega":
+            pedido.cep_entrega or "",
+
+        "cidade_entrega":
+            pedido.cidade_entrega or "",
+
+        "uf_entrega":
+            pedido.uf_entrega or "",
 
         "taxa_entrega":
             float(
@@ -2696,9 +2755,55 @@ def criar_pedido():
         }), 400
 
     bairro_entrega = ""
+    cep_entrega = ""
+    cidade_entrega = ""
+    uf_entrega = ""
     taxa_entrega = 0.0
 
     if tipo_pedido == "entrega":
+
+        cep_entrega = normalizar_cep(
+            dados.get(
+                "cep_entrega"
+            )
+        )
+
+        cidade_entrega = texto_seguro(
+            dados.get(
+                "cidade_entrega"
+            ),
+            120
+        )
+
+        uf_entrega = normalizar_uf(
+            dados.get(
+                "uf_entrega"
+            )
+        )
+
+        if cep_entrega == "":
+
+            return jsonify({
+                "sucesso": False,
+                "mensagem":
+                    "CEP de entrega invalido."
+            }), 400
+
+        if cidade_entrega == "":
+
+            return jsonify({
+                "sucesso": False,
+                "mensagem":
+                    "Cidade de entrega nao informada."
+            }), 400
+
+        if uf_entrega == "":
+
+            return jsonify({
+                "sucesso": False,
+                "mensagem":
+                    "UF de entrega invalida."
+            }), 400
 
         bairro_id_recebido = dados.get(
             "bairro_id"
@@ -2854,6 +2959,15 @@ def criar_pedido():
             bairro_entrega=
                 bairro_entrega,
 
+            cep_entrega=
+                cep_entrega,
+
+            cidade_entrega=
+                cidade_entrega,
+
+            uf_entrega=
+                uf_entrega,
+
             taxa_entrega=
                 taxa_entrega,
 
@@ -2984,6 +3098,15 @@ def criar_pedido():
 
         "bairro_entrega":
             bairro_entrega,
+
+        "cep_entrega":
+            cep_entrega,
+
+        "cidade_entrega":
+            cidade_entrega,
+
+        "uf_entrega":
+            uf_entrega,
 
         "taxa_entrega":
             taxa_entrega,
@@ -3284,3 +3407,4 @@ if __name__ == "__main__":
             False
         )
     )
+

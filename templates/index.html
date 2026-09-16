@@ -1751,6 +1751,9 @@
         let bairroId = null;
         let bairroNome = "";
         let enderecoCompleto = "";
+        let cepEntrega = "";
+        let cidadeEntrega = "";
+        let ufEntrega = "";
 
         if (tipo === "entrega") {
             const opcaoBairro = obterOpcaoBairroSelecionada();
@@ -1777,6 +1780,10 @@
                 mensagem.innerText = "Preencha CEP, rua e número.";
                 return;
             }
+
+            cepEntrega = cep.replace(/\D/g, "");
+            cidadeEntrega = cidade;
+            ufEntrega = estado.toUpperCase();
 
             enderecoCompleto = rua + ", " + numero + " - " + bairroNome;
 
@@ -1846,6 +1853,9 @@
             tipo,
             endereco: enderecoCompleto,
             bairro_id: bairroId,
+            cep_entrega: cepEntrega,
+            cidade_entrega: cidadeEntrega,
+            uf_entrega: ufEntrega,
             pagamento: pagamentoTexto,
             itens: itensPedido
         };
@@ -1958,3 +1968,4 @@
 
 </body>
 </html>
+
