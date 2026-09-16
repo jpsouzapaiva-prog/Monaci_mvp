@@ -41,6 +41,48 @@ class Empresa(db.Model):
         default=True
     )
 
+    # --------------------------------------------------------
+    # LOCALIZACAO DA EMPRESA / PONTO DE SAIDA DAS ENTREGAS
+    # --------------------------------------------------------
+
+    endereco = db.Column(
+        db.String(500),
+        nullable=False,
+        default="",
+        server_default=""
+    )
+
+    cep = db.Column(
+        db.String(20),
+        nullable=False,
+        default="",
+        server_default=""
+    )
+
+    cidade = db.Column(
+        db.String(120),
+        nullable=False,
+        default="",
+        server_default=""
+    )
+
+    uf = db.Column(
+        db.String(2),
+        nullable=False,
+        default="",
+        server_default=""
+    )
+
+    latitude = db.Column(
+        db.Numeric(10, 7),
+        nullable=True
+    )
+
+    longitude = db.Column(
+        db.Numeric(10, 7),
+        nullable=True
+    )
+
     criada_em = db.Column(
         db.DateTime,
         nullable=False,
@@ -160,6 +202,25 @@ class Motoboy(db.Model):
         default=True
     )
 
+    # --------------------------------------------------------
+    # LOCALIZACAO ATUAL DO MOTOBOY
+    # --------------------------------------------------------
+
+    latitude_atual = db.Column(
+        db.Numeric(10, 7),
+        nullable=True
+    )
+
+    longitude_atual = db.Column(
+        db.Numeric(10, 7),
+        nullable=True
+    )
+
+    localizacao_atualizada_em = db.Column(
+        db.DateTime,
+        nullable=True
+    )
+
     criado_em = db.Column(
         db.DateTime,
         nullable=False,
@@ -235,6 +296,37 @@ class Pedido(db.Model):
         nullable=False,
         default="",
         server_default=""
+    )
+
+    cep_entrega = db.Column(
+        db.String(20),
+        nullable=False,
+        default="",
+        server_default=""
+    )
+
+    cidade_entrega = db.Column(
+        db.String(120),
+        nullable=False,
+        default="",
+        server_default=""
+    )
+
+    uf_entrega = db.Column(
+        db.String(2),
+        nullable=False,
+        default="",
+        server_default=""
+    )
+
+    latitude_entrega = db.Column(
+        db.Numeric(10, 7),
+        nullable=True
+    )
+
+    longitude_entrega = db.Column(
+        db.Numeric(10, 7),
+        nullable=True
     )
 
     taxa_entrega = db.Column(
