@@ -1480,8 +1480,6 @@ def login():
             senha_configurada
         ):
 
-            session.clear()
-
             session[
                 "painel_autenticado"
             ] = True
@@ -1511,7 +1509,10 @@ def login():
 @login_painel_obrigatorio
 def logout():
 
-    session.clear()
+    session.pop(
+        "painel_autenticado",
+        None
+    )
 
     return jsonify({
         "sucesso": True,
@@ -1600,11 +1601,6 @@ def login_motoboy():
                 senha_recebida
             )
         ):
-
-            session.pop(
-                "painel_autenticado",
-                None
-            )
 
             session[
                 "motoboy_id"
