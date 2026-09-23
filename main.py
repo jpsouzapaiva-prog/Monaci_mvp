@@ -2136,6 +2136,148 @@ def painel():
 
 
 # ============================================================
+# CONFIGURACAO DA EMPRESA
+# ============================================================
+
+@app.route(
+    "/configuracoes/empresa",
+    methods=["GET", "POST"]
+)
+@login_painel_obrigatorio
+def configuracoes_empresa():
+
+    empresa = buscar_empresa_padrao()
+
+    if empresa is None:
+        return (
+            "Empresa padrao nao configurada.",
+            503
+        )
+
+    erro = None
+    sucesso = None
+
+    if request.args.get("salvo") == "1":
+        sucesso = (
+            "Configuracoes da empresa salvas com sucesso."
+        )
+
+    if request.method == "POST":
+
+        nome = texto_seguro(
+            request.form.get("nome"),
+            120
+        )
+
+        endereco = texto_seguro(
+            request.form.get("endereco"),
+            500
+        )
+
+        cep = normalizar_cep(
+            request.form.get("cep")
+        )
+
+        cidade = texto_seguro(
+            request.form.get("cidade"),
+            120
+        )
+
+        uf = normalizar_uf(
+            request.form.get("uf")
+        )
+
+        latitude_texto = texto_seguro(
+            request.form.get("latitude"),
+            30
+        ).replace(",", ".")
+
+        longitude_texto = texto_seguro(
+            request.form.get("longitude"),
+            30
+        ).replace(",", ".")
+
+        latitude = None
+        longitude = None
+
+        if nome == "":
+            erro = "Informe o nome da empresa."
+
+        elif endereco == "":
+            erro = "Informe o endereco da empresa."
+
+        elif cep == "":
+            erro = "Informe um CEP valido."
+
+        elif cidade == "":
+            erro = "Informe a cidade."
+
+        elif uf == "":
+            erro = "Informe uma UF valida."
+
+        elif latitude_texto == "":
+            erro = "Informe a latitude da loja."
+
+        elif longitude_texto == "":
+            erro = "Informe a longitude da loja."
+
+        if erro is None:
+
+            try:
+                latitude = float(latitude_texto)
+                longitude = float(longitude_texto)
+
+            except (TypeError, ValueError):
+                erro = "Latitude ou longitude invalida."
+
+        if erro is None and not (-90 <= latitude <= 90):
+            erro = "Latitude fora do intervalo permitido."
+
+        if erro is None and not (-180 <= longitude <= 180):
+            erro = "Longitude fora do intervalo permitido."
+
+        if erro is None:
+
+            empresa.nome = nome
+            empresa.endereco = endereco
+            empresa.cep = cep
+            empresa.cidade = cidade
+            empresa.uf = uf
+            empresa.latitude = latitude
+            empresa.longitude = longitude
+
+            try:
+
+                db.session.commit()
+
+                return redirect(
+                    url_for(
+                        "configuracoes_empresa",
+                        salvo="1"
+                    )
+                )
+
+            except Exception:
+
+                db.session.rollback()
+
+                app.logger.exception(
+                    "Erro ao salvar configuracoes da empresa."
+                )
+
+                erro = (
+                    "Nao foi possivel salvar as configuracoes."
+                )
+
+    return render_template(
+        "configuracoes_empresa.html",
+        empresa=empresa,
+        erro=erro,
+        sucesso=sucesso
+    )
+
+
+# ============================================================
 # CONFIGURACAO DE BAIRROS DE ENTREGA
 # ============================================================
 
@@ -3407,4 +3549,3 @@ if __name__ == "__main__":
             False
         )
     )
-

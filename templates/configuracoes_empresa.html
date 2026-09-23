@@ -1,0 +1,458 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#8f1515">
+
+    <title>Configurações da empresa - Família Monaci</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        :root {
+            --vermelho: #c62828;
+            --vermelho-escuro: #8f1515;
+            --vermelho-profundo: #6f1010;
+            --amarelo: #ffd600;
+            --fundo: #f5f2ed;
+            --branco: #ffffff;
+            --texto: #242424;
+            --texto-suave: #6e6e6e;
+            --borda: #e8e1da;
+            --verde: #2e7d32;
+            --verde-claro: #eaf6ec;
+            --sombra: 0 10px 28px rgba(0, 0, 0, .07);
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: Arial, Helvetica, sans-serif;
+            background:
+                radial-gradient(circle at 92% 0%, rgba(198, 40, 40, .05), transparent 22%),
+                linear-gradient(180deg, #faf8f5 0%, var(--fundo) 100%);
+            color: var(--texto);
+        }
+
+        button,
+        input,
+        a {
+            font: inherit;
+        }
+
+        .topo {
+            color: white;
+            background:
+                radial-gradient(circle at 88% 0%, rgba(255, 214, 0, .18), transparent 28%),
+                linear-gradient(135deg, var(--vermelho-profundo), #a91818 52%, #cf2b2b);
+            padding: 22px 18px;
+            box-shadow: 0 10px 30px rgba(111, 16, 16, .22);
+        }
+
+        .topo-conteudo {
+            max-width: 850px;
+            margin: 0 auto;
+        }
+
+        .topo small {
+            display: block;
+            margin-bottom: 5px;
+            color: rgba(255,255,255,.72);
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .topo h1 {
+            margin: 0;
+            color: var(--amarelo);
+            font-size: 30px;
+            line-height: 1.1;
+        }
+
+        .topo p {
+            margin: 7px 0 0;
+            color: rgba(255,255,255,.9);
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 850px;
+            margin: 0 auto;
+            padding: 24px 18px 40px;
+        }
+
+        .acoes-topo {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 18px;
+        }
+
+        .botao-link,
+        .botao-salvar {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 44px;
+            border: 0;
+            border-radius: 11px;
+            padding: 11px 16px;
+            font-weight: 800;
+            text-decoration: none;
+            cursor: pointer;
+            transition: transform .15s ease, opacity .15s ease;
+        }
+
+        .botao-link:hover,
+        .botao-salvar:hover {
+            transform: translateY(-1px);
+        }
+
+        .botao-voltar {
+            background: #222;
+            color: white;
+        }
+
+        .botao-salvar {
+            width: 100%;
+            margin-top: 4px;
+            background: var(--vermelho);
+            color: white;
+        }
+
+        .card {
+            background: var(--branco);
+            border: 1px solid rgba(0,0,0,.04);
+            border-radius: 18px;
+            padding: 24px;
+            box-shadow: var(--sombra);
+        }
+
+        .card h2 {
+            margin: 0 0 7px;
+            font-size: 22px;
+        }
+
+        .descricao {
+            margin: 0 0 20px;
+            color: var(--texto-suave);
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .erro,
+        .sucesso {
+            margin-bottom: 16px;
+            padding: 12px 13px;
+            border-radius: 11px;
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .erro {
+            border: 1px solid #efb4b4;
+            background: #fff1f1;
+            color: #8a1d1d;
+        }
+
+        .sucesso {
+            border: 1px solid #b8dfbd;
+            background: var(--verde-claro);
+            color: var(--verde);
+        }
+
+        .grade-campos {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .campo {
+            margin-bottom: 16px;
+        }
+
+        .campo-largo {
+            grid-column: 1 / -1;
+        }
+
+        .campo label {
+            display: block;
+            margin-bottom: 7px;
+            font-size: 14px;
+            font-weight: 800;
+        }
+
+        .campo input {
+            width: 100%;
+            min-height: 46px;
+            border: 1px solid #d8d1cb;
+            border-radius: 11px;
+            padding: 11px 13px;
+            background: #fff;
+            color: var(--texto);
+            font-size: 16px;
+            outline: none;
+        }
+
+        .campo input:focus {
+            border-color: var(--vermelho);
+            box-shadow: 0 0 0 3px rgba(198, 40, 40, .10);
+        }
+
+        .ajuda {
+            display: block;
+            margin-top: 6px;
+            color: var(--texto-suave);
+            font-size: 12px;
+            line-height: 1.4;
+        }
+
+        .aviso-gps {
+            margin: 4px 0 20px;
+            padding: 14px;
+            border: 1px solid #eadfb1;
+            border-radius: 11px;
+            background: #fffbe8;
+            color: #665712;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        @media (max-width: 650px) {
+            .grade-campos {
+                grid-template-columns: 1fr;
+            }
+
+            .campo-largo {
+                grid-column: auto;
+            }
+
+            .topo {
+                padding: 19px 15px;
+            }
+
+            .topo h1 {
+                font-size: 25px;
+            }
+
+            .container {
+                padding: 18px 14px 30px;
+            }
+
+            .card {
+                padding: 18px 15px;
+            }
+
+            .acoes-topo {
+                flex-direction: column;
+            }
+
+            .botao-link {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<header class="topo">
+    <div class="topo-conteudo">
+        <small>Configurações</small>
+
+        <h1>Dados da empresa</h1>
+
+        <p>
+            {{ empresa.nome }}
+        </p>
+    </div>
+</header>
+
+<main class="container">
+
+    <div class="acoes-topo">
+        <a
+            href="{{ url_for('painel') }}"
+            class="botao-link botao-voltar"
+        >
+            ← Voltar ao painel
+        </a>
+    </div>
+
+    <section class="card">
+
+        <h2>Endereço da loja</h2>
+
+        <p class="descricao">
+            Estes dados identificam a loja e serão usados como
+            ponto de saída das entregas.
+        </p>
+
+        {% if erro %}
+            <div class="erro">
+                {{ erro }}
+            </div>
+        {% endif %}
+
+        {% if sucesso %}
+            <div class="sucesso">
+                {{ sucesso }}
+            </div>
+        {% endif %}
+
+        <form
+            method="post"
+            action="{{ url_for('configuracoes_empresa') }}"
+            autocomplete="off"
+        >
+
+            <div class="grade-campos">
+
+                <div class="campo campo-largo">
+                    <label for="nome">
+                        Nome da empresa
+                    </label>
+
+                    <input
+                        id="nome"
+                        name="nome"
+                        type="text"
+                        maxlength="120"
+                        value="{{ empresa.nome or '' }}"
+                        placeholder="Ex.: Família Monaci"
+                        required
+                    >
+                </div>
+
+                <div class="campo campo-largo">
+                    <label for="endereco">
+                        Endereço completo
+                    </label>
+
+                    <input
+                        id="endereco"
+                        name="endereco"
+                        type="text"
+                        maxlength="500"
+                        value="{{ empresa.endereco or '' }}"
+                        placeholder="Ex.: Rua X, 123 - Geisel"
+                        required
+                    >
+
+                    <span class="ajuda">
+                        Informe rua, número e complemento, quando houver.
+                    </span>
+                </div>
+
+                <div class="campo">
+                    <label for="cep">
+                        CEP
+                    </label>
+
+                    <input
+                        id="cep"
+                        name="cep"
+                        type="text"
+                        inputmode="numeric"
+                        maxlength="9"
+                        value="{{ empresa.cep or '' }}"
+                        placeholder="Ex.: 58000-000"
+                        required
+                    >
+                </div>
+
+                <div class="campo">
+                    <label for="cidade">
+                        Cidade
+                    </label>
+
+                    <input
+                        id="cidade"
+                        name="cidade"
+                        type="text"
+                        maxlength="120"
+                        value="{{ empresa.cidade or '' }}"
+                        placeholder="Ex.: João Pessoa"
+                        required
+                    >
+                </div>
+
+                <div class="campo">
+                    <label for="uf">
+                        UF
+                    </label>
+
+                    <input
+                        id="uf"
+                        name="uf"
+                        type="text"
+                        maxlength="2"
+                        value="{{ empresa.uf or '' }}"
+                        placeholder="Ex.: PB"
+                        required
+                    >
+                </div>
+
+                <div class="campo">
+                    <label for="latitude">
+                        Latitude
+                    </label>
+
+                    <input
+                        id="latitude"
+                        name="latitude"
+                        type="text"
+                        inputmode="decimal"
+                        maxlength="30"
+                        value="{{ empresa.latitude if empresa.latitude is not none else '' }}"
+                        placeholder="Ex.: -7.175472"
+                        required
+                    >
+                </div>
+
+                <div class="campo">
+                    <label for="longitude">
+                        Longitude
+                    </label>
+
+                    <input
+                        id="longitude"
+                        name="longitude"
+                        type="text"
+                        inputmode="decimal"
+                        maxlength="30"
+                        value="{{ empresa.longitude if empresa.longitude is not none else '' }}"
+                        placeholder="Ex.: -34.873735"
+                        required
+                    >
+                </div>
+
+            </div>
+
+            <div class="aviso-gps">
+                📍 Essas coordenadas definem o ponto exato de saída das entregas
+                e serão usadas na etapa de rotas dos motoboys.
+            </div>
+
+            <button
+                type="submit"
+                class="botao-salvar"
+            >
+                Salvar configurações
+            </button>
+
+        </form>
+
+    </section>
+
+</main>
+
+</body>
+</html>

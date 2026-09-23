@@ -481,7 +481,7 @@
                                     class="botao botao-rota"
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    href="https://www.google.com/maps/search/?api=1&query={{ pedido.endereco|urlencode }}"
+                                    href="https://www.google.com/maps/dir/?api=1&origin={{ empresa.latitude }},{{ empresa.longitude }}&destination={{ (pedido.endereco ~ ', ' ~ pedido.bairro_entrega ~ ', ' ~ pedido.cidade_entrega ~ ' - ' ~ pedido.uf_entrega ~ ', ' ~ pedido.cep_entrega)|urlencode }}&travelmode=driving"
                                 >
                                     📍 Abrir rota
                                 </a>
