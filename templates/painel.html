@@ -209,6 +209,12 @@
             border: 1px solid #edcaca;
         }
 
+        .sair {
+            background: #fff0f0;
+            color: var(--vermelho-escuro);
+            border: 1px solid #e7bcbc;
+        }
+
         .colunas {
             display: grid;
             grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -480,6 +486,14 @@
 
             <button
                 type="button"
+                class="botao-topo sair"
+                onclick="sairPainel()"
+            >
+                🔒 Sair
+            </button>
+
+            <button
+                type="button"
                 class="botao-topo atualizar"
                 onclick="carregarPedidos()"
             >
@@ -545,6 +559,44 @@
 
 
 <script>
+
+    async function sairPainel() {
+
+        try {
+
+            const resposta =
+                await fetch(
+                    "/logout",
+                    {
+                        method: "POST"
+                    }
+                );
+
+            if (!resposta.ok) {
+
+                alert(
+                    "Não foi possível encerrar a sessão."
+                );
+
+                return;
+            }
+
+            window.location.href =
+                "/login";
+
+        } catch (erro) {
+
+            console.error(
+                "Erro ao sair do painel:",
+                erro
+            );
+
+            alert(
+                "Erro ao encerrar a sessão."
+            );
+        }
+    }
+
 
     function escaparHtml(texto) {
 
