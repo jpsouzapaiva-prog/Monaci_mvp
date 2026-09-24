@@ -129,6 +129,28 @@
             cursor: pointer;
         }
 
+        .atualizacao-automatica {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin: -6px 0 18px;
+            padding: 9px 12px;
+            border: 1px solid #d5ead8;
+            border-radius: 12px;
+            background: #f0f8f1;
+            color: #28612d;
+            font-size: 12px;
+            font-weight: 800;
+        }
+
+        .atualizacao-ponto {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #2e7d32;
+        }
+
         .secao {
             margin-top: 24px;
         }
@@ -360,6 +382,11 @@
             </form>
 
         </section>
+
+        <div class="atualizacao-automatica">
+            <span class="atualizacao-ponto"></span>
+            Pedidos atualizados automaticamente a cada 5 segundos
+        </div>
 
 
         <section class="secao">
@@ -690,6 +717,134 @@
         </section>
 
     </main>
+
+    <script>
+        let atualizandoPainelMotoboy = false;
+
+        async function atualizarPainelMotoboy() {
+
+            if (
+                atualizandoPainelMotoboy ||
+                document.hidden
+            ) {
+                return;
+            }
+
+            atualizandoPainelMotoboy = true;
+
+            try {
+
+                const resposta =
+                    await fetch(
+                        "/motoboy",
+                        {
+                            method: "GET",
+                            cache: "no-store"
+                        }
+                    );
+
+                const caminhoFinal =
+                    new URL(
+                        resposta.url
+                    ).pathname;
+
+                if (
+                    caminhoFinal.startsWith(
+                        "/motoboy/login"
+                    )
+                ) {
+
+                    window.location.href =
+                        "/motoboy/login";
+
+                    return;
+                }
+
+                if (
+                    !resposta.ok
+                ) {
+
+                    console.error(
+                        "Não foi possível atualizar o painel do motoboy."
+                    );
+
+                    return;
+                }
+
+                const html =
+                    await resposta.text();
+
+                const documentoNovo =
+                    new DOMParser()
+                        .parseFromString(
+                            html,
+                            "text/html"
+                        );
+
+                const secoesNovas =
+                    documentoNovo.querySelectorAll(
+                        "main.pagina > section.secao"
+                    );
+
+                const secoesAtuais =
+                    document.querySelectorAll(
+                        "main.pagina > section.secao"
+                    );
+
+                if (
+                    secoesNovas.length !==
+                    secoesAtuais.length
+                ) {
+                    return;
+                }
+
+                secoesNovas.forEach(
+                    (
+                        secaoNova,
+                        indice
+                    ) => {
+
+                        secoesAtuais[
+                            indice
+                        ].innerHTML =
+                            secaoNova.innerHTML;
+                    }
+                );
+
+            } catch (erro) {
+
+                console.error(
+                    "Erro ao atualizar entregas:",
+                    erro
+                );
+
+            } finally {
+
+                atualizandoPainelMotoboy =
+                    false;
+            }
+        }
+
+
+        setInterval(
+            atualizarPainelMotoboy,
+            5000
+        );
+
+
+        document.addEventListener(
+            "visibilitychange",
+            () => {
+
+                if (
+                    !document.hidden
+                ) {
+
+                    atualizarPainelMotoboy();
+                }
+            }
+        );
+    </script>
 
 </body>
 </html>
