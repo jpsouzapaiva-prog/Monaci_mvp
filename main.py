@@ -712,6 +712,16 @@ def pedido_para_dict(
         "tipo":
             pedido.tipo,
 
+        "motoboy_id":
+            pedido.motoboy_id,
+
+        "motoboy_nome":
+            (
+                pedido.motoboy.nome
+                if pedido.motoboy is not None
+                else ""
+            ),
+
         "endereco":
             pedido.endereco or "",
 
@@ -763,6 +773,11 @@ def pedido_para_dict(
         "hora_pronto":
             formatar_hora(
                 pedido.hora_pronto
+            ),
+
+        "hora_aceite_entrega":
+            formatar_hora(
+                pedido.hora_aceite_entrega
             ),
 
         "hora_saida_entrega":
@@ -1539,8 +1554,6 @@ def login():
             senha_configurada
         ):
 
-            session.clear()
-
             session[
                 "painel_autenticado"
             ] = True
@@ -1662,8 +1675,6 @@ def login_motoboy():
                 senha_recebida
             )
         ):
-
-            session.clear()
 
             session[
                 "motoboy_id"
@@ -2300,7 +2311,19 @@ def configuracoes_entregas():
             503
         )
 
-    erro = None
+    erro = texto_seguro(
+        request.args.get(
+            "erro"
+        ),
+        300
+    ) or None
+
+    sucesso = (
+        request.args.get(
+            "salvo"
+        )
+        == "1"
+    )
 
     if request.method == "POST":
 
@@ -2431,12 +2454,14 @@ def configuracoes_entregas():
         "bairros_entrega.html",
         empresa=empresa,
         bairros=bairros,
-        erro=erro
+        erro=erro,
+        sucesso=sucesso
     )
 
 
 # ============================================================
-# EDITAR TAXA DE BAIRRO
+# ============================================================
+# EDITAR NOME E TAXA DO BAIRRO
 # ============================================================
 
 @app.route(
@@ -2467,12 +2492,28 @@ def editar_bairro_entrega(
             404
         )
 
+    nome = texto_seguro(
+        request.form.get(
+            "nome"
+        ),
+        120
+    )
+
     taxa_texto = texto_seguro(
         request.form.get(
             "taxa"
         ),
         30
     )
+
+    if nome == "":
+
+        return redirect(
+            url_for(
+                "configuracoes_entregas",
+                erro="Informe o nome do bairro."
+            )
+        )
 
     try:
 
@@ -2493,17 +2534,47 @@ def editar_bairro_entrega(
         ValueError
     ):
 
-        return (
-            "Taxa de entrega invalida.",
-            400
+        return redirect(
+            url_for(
+                "configuracoes_entregas",
+                erro="Informe uma taxa de entrega valida."
+            )
         )
 
     if taxa < 0:
-        return (
-            "A taxa de entrega nao pode ser negativa.",
-            400
+
+        return redirect(
+            url_for(
+                "configuracoes_entregas",
+                erro="A taxa de entrega nao pode ser negativa."
+            )
         )
 
+    bairro_duplicado = (
+        BairroEntrega.query
+        .filter(
+            BairroEntrega.empresa_id
+            == empresa.id,
+            BairroEntrega.id
+            != bairro.id,
+            db.func.lower(
+                BairroEntrega.nome
+            )
+            == nome.lower()
+        )
+        .first()
+    )
+
+    if bairro_duplicado is not None:
+
+        return redirect(
+            url_for(
+                "configuracoes_entregas",
+                erro="Ja existe outro bairro cadastrado com este nome."
+            )
+        )
+
+    bairro.nome = nome
     bairro.taxa = taxa
 
     try:
@@ -2515,22 +2586,24 @@ def editar_bairro_entrega(
         db.session.rollback()
 
         app.logger.exception(
-            "Erro ao atualizar taxa do bairro."
+            "Erro ao atualizar bairro de entrega."
         )
 
-        return (
-            "Nao foi possivel atualizar a taxa.",
-            500
+        return redirect(
+            url_for(
+                "configuracoes_entregas",
+                erro="Nao foi possivel atualizar o bairro."
+            )
         )
 
     return redirect(
         url_for(
-            "configuracoes_entregas"
+            "configuracoes_entregas",
+            salvo="1"
         )
     )
 
 
-# ============================================================
 # ATIVAR / INATIVAR BAIRRO
 # ============================================================
 
@@ -3374,7 +3447,6 @@ def alterar_status(
     status_permitidos = [
         "EM PREPARO",
         "PRONTO",
-        "SAIU PARA ENTREGA",
         "FINALIZADO"
     ]
 
@@ -3411,6 +3483,17 @@ def alterar_status(
             "mensagem":
                 "Pedido nao encontrado."
         }), 404
+
+    if (
+        pedido.tipo == "entrega"
+        and novo_status == "FINALIZADO"
+    ):
+
+        return jsonify({
+            "sucesso": False,
+            "mensagem":
+                "A conclusao da entrega deve ser feita pelo motoboy."
+        }), 400
 
     (
         transicao_valida,
@@ -3464,19 +3547,6 @@ def alterar_status(
             )
 
         pedido.hora_pronto = (
-            agora
-        )
-
-    elif (
-        novo_status
-        == "SAIU PARA ENTREGA"
-    ):
-
-        pedido.status = (
-            "SAIU PARA ENTREGA"
-        )
-
-        pedido.hora_saida_entrega = (
             agora
         )
 

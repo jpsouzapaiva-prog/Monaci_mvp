@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#8f1515">
 
-    <title>Histórico de Pedidos - Família Monaci</title>
+    <title>Histórico e Fechamento - Família Monaci</title>
 
     <style>
         * { box-sizing: border-box; }
@@ -23,6 +23,8 @@
             --borda: #e8e1da;
             --verde: #2e7d32;
             --verde-claro: #eaf6ec;
+            --azul: #1565c0;
+            --azul-claro: #eaf2fb;
             --sombra: 0 10px 28px rgba(0, 0, 0, .07);
         }
 
@@ -194,7 +196,7 @@
 
         .resumo {
             display: grid;
-            grid-template-columns: repeat(2, minmax(220px, 1fr));
+            grid-template-columns: repeat(4, minmax(180px, 1fr));
             gap: 14px;
             margin-bottom: 18px;
         }
@@ -223,6 +225,8 @@
         }
 
         .card-resumo.total strong { color: var(--verde); }
+        .card-resumo.entregas strong { color: var(--azul); }
+        .card-resumo.motoboy strong { color: var(--vermelho); }
 
         .filtros {
             margin-bottom: 18px;
@@ -266,6 +270,86 @@
         .campo input:focus {
             border-color: var(--vermelho);
             box-shadow: 0 0 0 3px rgba(198,40,40,.08);
+        }
+
+        .fechamento {
+            margin: 20px 0;
+        }
+
+        .fechamento-titulo {
+            margin-bottom: 12px;
+        }
+
+        .fechamento-titulo span {
+            display: block;
+            margin-bottom: 4px;
+            color: var(--azul);
+            font-size: 11px;
+            font-weight: 900;
+            letter-spacing: .8px;
+            text-transform: uppercase;
+        }
+
+        .fechamento-titulo h2 {
+            margin: 0;
+            font-size: 23px;
+        }
+
+        .fechamento-titulo p {
+            margin: 6px 0 0;
+            color: var(--texto-suave);
+            font-size: 13px;
+        }
+
+        .fechamento-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(220px, 1fr));
+            gap: 14px;
+        }
+
+        .motoboy-card {
+            padding: 17px;
+            border: 1px solid #d9e5f3;
+            border-top: 5px solid var(--azul);
+            border-radius: 17px;
+            background: white;
+            box-shadow: var(--sombra);
+        }
+
+        .motoboy-card h3 {
+            margin: 0 0 12px;
+            font-size: 18px;
+        }
+
+        .motoboy-linha {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            margin: 8px 0;
+            color: #4f4f4f;
+            font-size: 13px;
+        }
+
+        .motoboy-total {
+            margin-top: 13px;
+            padding-top: 12px;
+            border-top: 1px solid #e8edf2;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .motoboy-total span {
+            color: var(--texto-suave);
+            font-size: 12px;
+            font-weight: 800;
+            text-transform: uppercase;
+        }
+
+        .motoboy-total strong {
+            color: var(--verde);
+            font-size: 24px;
         }
 
         .lista {
@@ -315,6 +399,14 @@
             color: #484848;
             font-size: 13px;
             line-height: 1.5;
+        }
+
+        .destaque-motoboy {
+            padding: 10px 11px;
+            border-radius: 10px;
+            background: var(--azul-claro);
+            color: #174f86;
+            font-weight: 800;
         }
 
         .pedido h3 {
@@ -390,6 +482,11 @@
             font-weight: 700;
         }
 
+        @media (max-width: 1050px) {
+            .resumo { grid-template-columns: repeat(2, minmax(180px, 1fr)); }
+            .fechamento-grid { grid-template-columns: repeat(2, minmax(220px, 1fr)); }
+        }
+
         @media (max-width: 800px) {
             header { padding: 15px 13px; }
             .logo { width: 56px; height: 56px; flex-basis: 56px; border-radius: 13px; }
@@ -412,7 +509,8 @@
 
             .resumo,
             .dados,
-            .filtros-grid {
+            .filtros-grid,
+            .fechamento-grid {
                 grid-template-columns: 1fr;
             }
 
@@ -435,13 +533,13 @@
 
             <div>
                 <small>Operação Família Monaci</small>
-                <h1>Histórico de Pedidos</h1>
-                <p>Consulta dos pedidos finalizados</p>
+                <h1>Histórico e Fechamento</h1>
+                <p>Pedidos finalizados e acerto dos motoboys</p>
             </div>
         </div>
 
         <div class="cabecalho-tag">
-            📋 Registro da operação
+            🛵 Fechamento por entrega
         </div>
     </div>
 </header>
@@ -453,7 +551,7 @@
         <div class="titulo">
             <span>Histórico</span>
             <h2>Pedidos finalizados</h2>
-            <p>Consulte pedidos, valores e detalhes de preparo.</p>
+            <p>Consulte pedidos, entregas e valores dos motoboys.</p>
         </div>
 
         <div class="acoes-topo">
@@ -489,6 +587,16 @@
             <strong id="totalVendido">R$ 0,00</strong>
         </div>
 
+        <div class="card-resumo entregas">
+            <span>Entregas concluídas</span>
+            <strong id="totalEntregas">0</strong>
+        </div>
+
+        <div class="card-resumo motoboy">
+            <span>A pagar aos motoboys</span>
+            <strong id="totalPagarMotoboys">R$ 0,00</strong>
+        </div>
+
     </section>
 
     <section class="filtros">
@@ -500,13 +608,13 @@
                 <input
                     id="busca"
                     type="text"
-                    placeholder="Cliente ou número do pedido"
+                    placeholder="Cliente, pedido, bairro ou motoboy"
                     oninput="aplicarFiltros()"
                 >
             </div>
 
             <div class="campo">
-                <label for="dataFiltro">Data</label>
+                <label for="dataFiltro">Data do fechamento</label>
                 <input
                     id="dataFiltro"
                     type="date"
@@ -514,6 +622,25 @@
                 >
             </div>
 
+        </div>
+
+    </section>
+
+    <section class="fechamento">
+
+        <div class="fechamento-titulo">
+            <span>Fechamento dos motoboys</span>
+            <h2>Valores a receber</h2>
+            <p>A remuneração do motoboy é a soma das taxas dos bairros das entregas concluídas.</p>
+        </div>
+
+        <div
+            class="fechamento-grid"
+            id="fechamentoMotoboys"
+        >
+            <div class="vazio">
+                Carregando fechamento...
+            </div>
         </div>
 
     </section>
@@ -560,13 +687,45 @@
     }
 
 
+    function dataHojeISO() {
+
+        const agora = new Date();
+
+        const ano =
+            agora.getFullYear();
+
+        const mes =
+            String(
+                agora.getMonth() + 1
+            ).padStart(
+                2,
+                "0"
+            );
+
+        const dia =
+            String(
+                agora.getDate()
+            ).padStart(
+                2,
+                "0"
+            );
+
+        return (
+            ano +
+            "-" +
+            mes +
+            "-" +
+            dia
+        );
+    }
+
+
     async function carregarHistorico() {
 
         const lista =
             document.getElementById(
                 "listaHistorico"
             );
-
 
         lista.innerHTML =
             '<div class="vazio">Carregando histórico...</div>';
@@ -580,25 +739,34 @@
                 );
 
 
-            if (
-                !resposta.ok
-            ) {
+            const resultado =
+                await resposta.json();
+
+
+            if (!resposta.ok) {
+
+                if (
+                    resposta.status === 401
+                ) {
+
+                    window.location.href =
+                        "/login";
+
+                    return;
+                }
 
                 throw new Error(
+                    resultado.mensagem ||
                     "Erro ao consultar pedidos."
                 );
             }
 
 
-            const pedidos =
-                await resposta.json();
-
-
             pedidosFinalizados =
                 Array.isArray(
-                    pedidos
+                    resultado
                 )
-                    ? pedidos
+                    ? resultado
                     : [];
 
 
@@ -615,6 +783,13 @@
             lista.innerHTML =
                 '<div class="erro">' +
                 "Não foi possível carregar o histórico." +
+                "</div>";
+
+            document.getElementById(
+                "fechamentoMotoboys"
+            ).innerHTML =
+                '<div class="erro">' +
+                "Não foi possível carregar o fechamento." +
                 "</div>";
         }
     }
@@ -653,17 +828,25 @@
                                 pedido.cliente || ""
                             ).toLowerCase();
 
-
                         const numero =
                             String(
                                 pedido.numero || ""
                             );
 
-
                         const numeroFormatado =
                             String(
                                 pedido.numero_formatado || ""
                             );
+
+                        const bairro =
+                            String(
+                                pedido.bairro_entrega || ""
+                            ).toLowerCase();
+
+                        const motoboy =
+                            String(
+                                pedido.motoboy_nome || ""
+                            ).toLowerCase();
 
 
                         return (
@@ -674,6 +857,12 @@
                                 busca
                             ) ||
                             numeroFormatado.includes(
+                                busca
+                            ) ||
+                            bairro.includes(
+                                busca
+                            ) ||
+                            motoboy.includes(
                                 busca
                             )
                         );
@@ -716,6 +905,9 @@
             pedidosFiltrados
         );
 
+        renderizarFechamento(
+            pedidosFiltrados
+        );
 
         renderizarPedidos(
             pedidosFiltrados
@@ -745,6 +937,29 @@
             );
 
 
+        const entregas =
+            pedidos.filter(
+                pedido =>
+                    pedido.tipo === "entrega" &&
+                    pedido.motoboy_id &&
+                    pedido.motoboy_nome
+            );
+
+
+        const totalPagar =
+            entregas.reduce(
+                (
+                    acumulado,
+                    pedido
+                ) =>
+                    acumulado +
+                    Number(
+                        pedido.taxa_entrega || 0
+                    ),
+                0
+            );
+
+
         document.getElementById(
             "totalPedidos"
         ).innerText =
@@ -757,6 +972,162 @@
             formatarMoeda(
                 total
             );
+
+
+        document.getElementById(
+            "totalEntregas"
+        ).innerText =
+            entregas.length;
+
+
+        document.getElementById(
+            "totalPagarMotoboys"
+        ).innerText =
+            formatarMoeda(
+                totalPagar
+            );
+    }
+
+
+    function renderizarFechamento(
+        pedidos
+    ) {
+
+        const container =
+            document.getElementById(
+                "fechamentoMotoboys"
+            );
+
+
+        const entregas =
+            pedidos.filter(
+                pedido =>
+                    pedido.tipo === "entrega" &&
+                    pedido.motoboy_id &&
+                    pedido.motoboy_nome
+            );
+
+
+        if (
+            entregas.length === 0
+        ) {
+
+            container.innerHTML =
+                '<div class="vazio">' +
+                "Nenhuma entrega finalizada por motoboy nesta data." +
+                "</div>";
+
+            return;
+        }
+
+
+        const porMotoboy = {};
+
+
+        for (
+            const pedido of entregas
+        ) {
+
+            const chave =
+                String(
+                    pedido.motoboy_id
+                );
+
+
+            if (
+                !porMotoboy[chave]
+            ) {
+
+                porMotoboy[chave] = {
+                    nome:
+                        pedido.motoboy_nome,
+
+                    quantidade:
+                        0,
+
+                    valorReceber:
+                        0,
+
+                    totalPedidos:
+                        0
+                };
+            }
+
+
+            porMotoboy[chave].quantidade +=
+                1;
+
+
+            porMotoboy[chave].valorReceber +=
+                Number(
+                    pedido.taxa_entrega || 0
+                );
+
+
+            porMotoboy[chave].totalPedidos +=
+                Number(
+                    pedido.total || 0
+                );
+        }
+
+
+        const grupos =
+            Object.values(
+                porMotoboy
+            ).sort(
+                (
+                    a,
+                    b
+                ) =>
+                    a.nome.localeCompare(
+                        b.nome,
+                        "pt-BR"
+                    )
+            );
+
+
+        let html = "";
+
+
+        for (
+            const grupo of grupos
+        ) {
+
+            html += `
+                <article class="motoboy-card">
+
+                    <h3>
+                        🛵 ${escaparHtml(
+                            grupo.nome
+                        )}
+                    </h3>
+
+                    <div class="motoboy-linha">
+                        <span>Entregas concluídas</span>
+                        <strong>${grupo.quantidade}</strong>
+                    </div>
+
+                    <div class="motoboy-linha">
+                        <span>Total dos pedidos entregues</span>
+                        <strong>${formatarMoeda(
+                            grupo.totalPedidos
+                        )}</strong>
+                    </div>
+
+                    <div class="motoboy-total">
+                        <span>A receber</span>
+                        <strong>${formatarMoeda(
+                            grupo.valorReceber
+                        )}</strong>
+                    </div>
+
+                </article>
+            `;
+        }
+
+
+        container.innerHTML =
+            html;
     }
 
 
@@ -978,6 +1349,39 @@
         }
 
 
+        let entregaHTML = "";
+
+
+        if (
+            pedido.tipo === "entrega"
+        ) {
+
+            entregaHTML =
+                '<div class="destaque-motoboy">' +
+                "<strong>Motoboy:</strong> " +
+                (
+                    pedido.motoboy_nome
+                        ? escaparHtml(
+                            pedido.motoboy_nome
+                        )
+                        : "Não identificado"
+                ) +
+                "<br><strong>Bairro:</strong> " +
+                escaparHtml(
+                    pedido.bairro_entrega || ""
+                ) +
+                "<br><strong>Taxa da entrega:</strong> " +
+                formatarMoeda(
+                    pedido.taxa_entrega
+                ) +
+                "<br><strong>Valor do motoboy:</strong> " +
+                formatarMoeda(
+                    pedido.taxa_entrega
+                ) +
+                "</div>";
+        }
+
+
         let horariosHTML =
             '<div class="horarios">' +
             "<strong>Recebido:</strong> " +
@@ -1006,6 +1410,18 @@
                 "<br><strong>Pronto:</strong> " +
                 escaparHtml(
                     pedido.hora_pronto
+                );
+        }
+
+
+        if (
+            pedido.hora_aceite_entrega
+        ) {
+
+            horariosHTML +=
+                "<br><strong>Aceite do motoboy:</strong> " +
+                escaparHtml(
+                    pedido.hora_aceite_entrega
                 );
         }
 
@@ -1095,6 +1511,8 @@
 
                 </div>
 
+                ${entregaHTML}
+
                 <h3>Itens do pedido</h3>
 
                 <div class="itens">
@@ -1106,6 +1524,12 @@
             </article>
         `;
     }
+
+
+    document.getElementById(
+        "dataFiltro"
+    ).value =
+        dataHojeISO();
 
 
     carregarHistorico();

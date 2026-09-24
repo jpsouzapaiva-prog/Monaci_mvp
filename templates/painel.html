@@ -396,6 +396,19 @@
         .botao-entrega { background: var(--azul); color: white; }
         .botao-finalizar { background: #2d2d2d; color: white; }
 
+        .acao-informativa {
+            width: 100%;
+            padding: 11px 12px;
+            border: 1px solid #d9e5f3;
+            border-radius: 10px;
+            background: #eef5fc;
+            color: #174f86;
+            font-size: 12px;
+            font-weight: 800;
+            line-height: 1.45;
+            text-align: center;
+        }
+
         .mensagem-vazia {
             padding: 22px 14px;
             border: 1px dashed #ddd4cd;
@@ -617,8 +630,34 @@
             const resposta =
                 await fetch("/pedidos");
 
-            const pedidos =
+            const resultado =
                 await resposta.json();
+
+            if (!resposta.ok) {
+
+                if (resposta.status === 401) {
+
+                    window.location.href =
+                        "/login";
+
+                    return;
+                }
+
+                throw new Error(
+                    resultado.mensagem ||
+                    "Não foi possível carregar os pedidos."
+                );
+            }
+
+            if (!Array.isArray(resultado)) {
+
+                throw new Error(
+                    "Resposta inválida ao carregar pedidos."
+                );
+            }
+
+            const pedidos =
+                resultado;
 
 
             const novos =
@@ -923,6 +962,53 @@
         }
 
 
+        let motoboyHTML = "";
+
+
+        if (
+            pedido.tipo === "entrega" &&
+            (
+                pedido.status === "PRONTO PARA ENTREGA" ||
+                pedido.status === "SAIU PARA ENTREGA"
+            )
+        ) {
+
+            if (
+                pedido.motoboy_nome
+            ) {
+
+                motoboyHTML =
+                    "<div>" +
+                    "<strong>Motoboy:</strong> " +
+                    escaparHtml(
+                        pedido.motoboy_nome
+                    ) +
+                    "</div>";
+
+                if (
+                    pedido.hora_aceite_entrega
+                ) {
+
+                    motoboyHTML +=
+                        "<div>" +
+                        "<strong>Aceitou:</strong> " +
+                        escaparHtml(
+                            pedido.hora_aceite_entrega
+                        ) +
+                        "</div>";
+                }
+
+            } else {
+
+                motoboyHTML =
+                    "<div>" +
+                    "<strong>Motoboy:</strong> " +
+                    "Aguardando aceite" +
+                    "</div>";
+            }
+        }
+
+
         let alertaPronto = "";
 
 
@@ -990,6 +1076,18 @@
                 "<br><strong>Pronto:</strong> " +
                 escaparHtml(
                     pedido.hora_pronto
+                );
+        }
+
+
+        if (
+            pedido.hora_aceite_entrega
+        ) {
+
+            horariosHTML +=
+                "<br><strong>Aceite do motoboy:</strong> " +
+                escaparHtml(
+                    pedido.hora_aceite_entrega
                 );
         }
 
@@ -1065,15 +1163,26 @@
 
             } else {
 
-                botaoHTML =
-                    '<button ' +
-                    'class="botao-status botao-entrega" ' +
-                    'onclick="alterarStatus(' +
-                    pedido.numero +
-                    ", 'SAIU PARA ENTREGA'" +
-                    ')">' +
-                    "Saiu para entrega" +
-                    "</button>";
+                if (
+                    pedido.motoboy_nome
+                ) {
+
+                    botaoHTML =
+                        '<div class="acao-informativa">' +
+                        "✅ Entrega aceita por " +
+                        escaparHtml(
+                            pedido.motoboy_nome
+                        ) +
+                        ".<br>Aguardando o motoboy iniciar a rota." +
+                        "</div>";
+
+                } else {
+
+                    botaoHTML =
+                        '<div class="acao-informativa">' +
+                        "🛵 Aguardando um motoboy aceitar a entrega." +
+                        "</div>";
+                }
             }
         }
 
@@ -1083,14 +1192,18 @@
         ) {
 
             botaoHTML =
-                '<button ' +
-                'class="botao-status botao-finalizar" ' +
-                'onclick="alterarStatus(' +
-                pedido.numero +
-                ", 'FINALIZADO'" +
-                ')">' +
-                "Entrega concluída" +
-                "</button>";
+                '<div class="acao-informativa">' +
+                "🛵 Entrega em rota" +
+                (
+                    pedido.motoboy_nome
+                        ? " com " +
+                          escaparHtml(
+                              pedido.motoboy_nome
+                          )
+                        : ""
+                ) +
+                ".<br>A conclusão é feita pelo motoboy." +
+                "</div>";
         }
 
 
@@ -1167,6 +1280,8 @@
                     </div>
 
                     ${enderecoHTML}
+
+                    ${motoboyHTML}
 
                     <div>
                         <strong>Pagamento:</strong>
