@@ -1539,6 +1539,8 @@ def login():
             senha_configurada
         ):
 
+            session.clear()
+
             session[
                 "painel_autenticado"
             ] = True
@@ -1660,6 +1662,8 @@ def login_motoboy():
                 senha_recebida
             )
         ):
+
+            session.clear()
 
             session[
                 "motoboy_id"
